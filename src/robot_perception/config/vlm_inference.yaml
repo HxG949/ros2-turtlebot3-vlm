@@ -1,0 +1,9 @@
+vlm_inference_node:
+  ros__parameters:
+    image_topic: /camera/image_raw
+    result_topic: /vlm/perception_result
+    inference_interval: 2.0
+    model_id: Salesforce/blip-image-captioning-base
+    max_new_tokens: 30
+    use_fp16: true
+    target_object: bottle

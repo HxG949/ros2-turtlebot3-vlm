@@ -2,6 +2,7 @@ build/
 install/
 log/
 .vscode/
+.venv/
+.pytest_cache/
 *.pyc
 __pycache__/
-

@@ -1,0 +1,13 @@
+parking_decision_node:
+  ros__parameters:
+    odom_topic: /odom
+    decision_topic: /robot/decision
+    goal_x: 0.8015
+    goal_y: 0.0
+    goal_yaw: 3.141592653589793
+    decision_rate_hz: 10.0
+    mission_timeout: 40.0
+    odom_timeout: 0.5
+    position_tolerance: 0.03
+    heading_tolerance: 0.08
+    final_yaw_tolerance: 0.05

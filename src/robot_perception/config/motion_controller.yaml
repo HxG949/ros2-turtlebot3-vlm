@@ -1,0 +1,11 @@
+motion_controller_node:
+  ros__parameters:
+    decision_topic: /robot/decision
+    cmd_vel_topic: /cmd_vel
+    enabled: false
+    control_rate_hz: 10.0
+    decision_timeout: 1.0
+    max_linear_speed: 0.15
+    max_angular_speed: 0.5
+    forward_speed: 0.1
+    turn_speed: 0.35

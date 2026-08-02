@@ -1,0 +1,9 @@
+decision_node:
+  ros__parameters:
+    vlm_topic: /vlm/perception_result
+    safety_topic: /safety/status
+    decision_topic: /robot/decision
+    decision_interval: 0.5
+    vlm_timeout: 5.0
+    safety_timeout: 1.0
+    forward_clear_distance: 0.6

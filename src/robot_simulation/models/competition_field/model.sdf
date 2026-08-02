@@ -1,0 +1,175 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <model name="competition_field">
+    <static>true</static>
+    <link name="field_link">
+      <collision name="floor_collision">
+        <pose>0 0 -0.01 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>2.10 2.10 0.02</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="floor_visual">
+        <pose>0 0 -0.01 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>2.10 2.10 0.02</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.82 0.82 0.82 1</ambient>
+          <diffuse>0.82 0.82 0.82 1</diffuse>
+        </material>
+      </visual>
+
+      <collision name="wall_x_min_collision">
+        <pose>-1.06 0 0.175 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 2.14 0.35</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="wall_x_min_visual">
+        <pose>-1.06 0 0.175 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 2.14 0.35</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.25 0.45 0.65 1</ambient>
+          <diffuse>0.25 0.45 0.65 1</diffuse>
+        </material>
+      </visual>
+
+      <collision name="wall_x_max_collision">
+        <pose>1.06 0 0.175 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 2.14 0.35</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="wall_x_max_visual">
+        <pose>1.06 0 0.175 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 2.14 0.35</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.25 0.45 0.65 1</ambient>
+          <diffuse>0.25 0.45 0.65 1</diffuse>
+        </material>
+      </visual>
+
+      <collision name="wall_y_min_collision">
+        <pose>0 -1.06 0.175 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>2.14 0.02 0.35</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="wall_y_min_visual">
+        <pose>0 -1.06 0.175 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>2.14 0.02 0.35</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.25 0.45 0.65 1</ambient>
+          <diffuse>0.25 0.45 0.65 1</diffuse>
+        </material>
+      </visual>
+
+      <collision name="wall_y_max_collision">
+        <pose>0 1.06 0.175 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>2.14 0.02 0.35</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="wall_y_max_visual">
+        <pose>0 1.06 0.175 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>2.14 0.02 0.35</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.25 0.45 0.65 1</ambient>
+          <diffuse>0.25 0.45 0.65 1</diffuse>
+        </material>
+      </visual>
+
+      <visual name="start_x_min_line">
+        <pose>-1.059 -0.845 0.0025 0 0 0</pose>
+        <geometry><box><size>0.018 0.246 0.005</size></box></geometry>
+        <material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.02 0.02 0.02 1</diffuse></material>
+      </visual>
+      <visual name="start_x_max_line">
+        <pose>-0.744 -0.845 0.0025 0 0 0</pose>
+        <geometry><box><size>0.018 0.246 0.005</size></box></geometry>
+        <material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.02 0.02 0.02 1</diffuse></material>
+      </visual>
+      <visual name="start_y_min_line">
+        <pose>-0.9015 -0.959 0.0025 0 0 0</pose>
+        <geometry><box><size>0.297 0.018 0.005</size></box></geometry>
+        <material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.02 0.02 0.02 1</diffuse></material>
+      </visual>
+      <visual name="start_y_max_line">
+        <pose>-0.9015 -0.731 0.0025 0 0 0</pose>
+        <geometry><box><size>0.297 0.018 0.005</size></box></geometry>
+        <material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.02 0.02 0.02 1</diffuse></material>
+      </visual>
+
+      <visual name="fixed_2_x_min_line">
+        <pose>0.644 0 0.0025 0 0 0</pose>
+        <geometry><box><size>0.018 0.246 0.005</size></box></geometry>
+        <material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.02 0.02 0.02 1</diffuse></material>
+      </visual>
+      <visual name="fixed_2_x_max_line">
+        <pose>0.959 0 0.0025 0 0 0</pose>
+        <geometry><box><size>0.018 0.246 0.005</size></box></geometry>
+        <material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.02 0.02 0.02 1</diffuse></material>
+      </visual>
+      <visual name="fixed_2_y_min_line">
+        <pose>0.8015 -0.114 0.0025 0 0 0</pose>
+        <geometry><box><size>0.297 0.018 0.005</size></box></geometry>
+        <material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.02 0.02 0.02 1</diffuse></material>
+      </visual>
+      <visual name="fixed_2_y_max_line">
+        <pose>0.8015 0.114 0.0025 0 0 0</pose>
+        <geometry><box><size>0.297 0.018 0.005</size></box></geometry>
+        <material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.02 0.02 0.02 1</diffuse></material>
+      </visual>
+
+      <visual name="target_x_min_line">
+        <pose>-1.059 0 0.0025 0 0 0</pose>
+        <geometry><box><size>0.018 0.436 0.005</size></box></geometry>
+        <material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.02 0.02 0.02 1</diffuse></material>
+      </visual>
+      <visual name="target_x_max_line">
+        <pose>-0.741 0 0.0025 0 0 0</pose>
+        <geometry><box><size>0.018 0.436 0.005</size></box></geometry>
+        <material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.02 0.02 0.02 1</diffuse></material>
+      </visual>
+      <visual name="target_y_min_line">
+        <pose>-0.90 -0.209 0.0025 0 0 0</pose>
+        <geometry><box><size>0.30 0.018 0.005</size></box></geometry>
+        <material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.02 0.02 0.02 1</diffuse></material>
+      </visual>
+      <visual name="target_y_max_line">
+        <pose>-0.90 0.209 0.0025 0 0 0</pose>
+        <geometry><box><size>0.30 0.018 0.005</size></box></geometry>
+        <material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.02 0.02 0.02 1</diffuse></material>
+      </visual>
+    </link>
+  </model>
+</sdf>

@@ -1,0 +1,162 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <model name="bottle_model">
+    <static>true</static>
+    <link name="bottle_link">
+      <collision name="bottle_collision">
+        <pose>0 0 0.10 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.02899</radius>
+            <length>0.20</length>
+          </cylinder>
+        </geometry>
+      </collision>
+
+      <visual name="lower_body">
+        <pose>0 0 0.02319 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.02826</radius>
+            <length>0.04638</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.95 0.95 0.95 1</ambient>
+          <diffuse>0.95 0.95 0.95 1</diffuse>
+          <specular>0.15 0.15 0.15 1</specular>
+        </material>
+      </visual>
+
+      <visual name="red_waist_band">
+        <pose>0 0 0.07101 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.02870</radius>
+            <length>0.04928</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.75 0.01 0.01 1</ambient>
+          <diffuse>0.90 0.02 0.02 1</diffuse>
+          <specular>0.20 0.05 0.05 1</specular>
+        </material>
+      </visual>
+
+      <visual name="upper_body">
+        <pose>0 0 0.11014 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.02826</radius>
+            <length>0.02899</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.95 0.95 0.95 1</ambient>
+          <diffuse>0.95 0.95 0.95 1</diffuse>
+          <specular>0.15 0.15 0.15 1</specular>
+        </material>
+      </visual>
+
+      <visual name="shoulder_1">
+        <pose>0 0 0.12826 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.02754</radius>
+            <length>0.00725</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.95 0.95 0.95 1</ambient>
+          <diffuse>0.95 0.95 0.95 1</diffuse>
+        </material>
+      </visual>
+
+      <visual name="shoulder_2">
+        <pose>0 0 0.13551 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.02522</radius>
+            <length>0.00725</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.95 0.95 0.95 1</ambient>
+          <diffuse>0.95 0.95 0.95 1</diffuse>
+        </material>
+      </visual>
+
+      <visual name="shoulder_3">
+        <pose>0 0 0.14275 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.02261</radius>
+            <length>0.00725</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.95 0.95 0.95 1</ambient>
+          <diffuse>0.95 0.95 0.95 1</diffuse>
+        </material>
+      </visual>
+
+      <visual name="shoulder_4">
+        <pose>0 0 0.15000 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.01971</radius>
+            <length>0.00725</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.95 0.95 0.95 1</ambient>
+          <diffuse>0.95 0.95 0.95 1</diffuse>
+        </material>
+      </visual>
+
+      <visual name="shoulder_5">
+        <pose>0 0 0.15652 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.01652</radius>
+            <length>0.00580</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.95 0.95 0.95 1</ambient>
+          <diffuse>0.95 0.95 0.95 1</diffuse>
+        </material>
+      </visual>
+
+      <visual name="neck">
+        <pose>0 0 0.17101 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.01159</radius>
+            <length>0.02319</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.95 0.95 0.95 1</ambient>
+          <diffuse>0.95 0.95 0.95 1</diffuse>
+          <specular>0.15 0.15 0.15 1</specular>
+        </material>
+      </visual>
+
+      <visual name="red_cap">
+        <pose>0 0 0.19130 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.01449</radius>
+            <length>0.01739</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.75 0.01 0.01 1</ambient>
+          <diffuse>0.90 0.02 0.02 1</diffuse>
+          <specular>0.20 0.05 0.05 1</specular>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>
