@@ -6,3 +6,4 @@ log/
 .pytest_cache/
 *.pyc
 __pycache__/
+handoff/

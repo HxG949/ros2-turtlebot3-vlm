@@ -28,8 +28,10 @@ setup(
     zip_safe=True,
     maintainer='guoxuehan',
     maintainer_email='18268163458@163.com',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    description=(
+        'VLM perception, lidar safety, decision, and motion control nodes.'
+    ),
+    license='Apache-2.0',
     extras_require={
         'test': [
             'pytest',

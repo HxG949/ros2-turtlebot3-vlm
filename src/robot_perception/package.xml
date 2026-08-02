@@ -3,9 +3,9 @@
 <package format="3">
   <name>robot_perception</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>VLM perception, lidar safety, decision, and motion control nodes.</description>
   <maintainer email="18268163458@163.com">guoxuehan</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apache-2.0</license>
 
   <depend>rclpy</depend>
   <depend>sensor_msgs</depend>
