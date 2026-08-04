@@ -24,6 +24,21 @@
         </material>
       </visual>
 
+      <visual name="obstacle_region_visual">
+        <pose>-0.10 0 0.001 0 0 0</pose>
+        <cast_shadows>false</cast_shadows>
+        <transparency>0.55</transparency>
+        <geometry>
+          <box>
+            <size>0.20 2.10 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.82 0.72 0.35 1</ambient>
+          <diffuse>0.82 0.72 0.35 1</diffuse>
+        </material>
+      </visual>
+
       <collision name="wall_x_min_collision">
         <pose>-1.06 0 0.175 0 0 0</pose>
         <geometry>

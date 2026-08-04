@@ -4,21 +4,21 @@
     <static>true</static>
     <link name="bottle_link">
       <collision name="bottle_collision">
-        <pose>0 0 0.10 0 0 0</pose>
+        <pose>0 0 0.085 0 0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.02899</radius>
-            <length>0.20</length>
+            <radius>0.035</radius>
+            <length>0.17</length>
           </cylinder>
         </geometry>
       </collision>
 
       <visual name="lower_body">
-        <pose>0 0 0.02319 0 0 0</pose>
+        <pose>0 0 0.01971 0 0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.02826</radius>
-            <length>0.04638</length>
+            <radius>0.03412</radius>
+            <length>0.03942</length>
           </cylinder>
         </geometry>
         <material>
@@ -29,11 +29,11 @@
       </visual>
 
       <visual name="red_waist_band">
-        <pose>0 0 0.07101 0 0 0</pose>
+        <pose>0 0 0.06036 0 0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.02870</radius>
-            <length>0.04928</length>
+            <radius>0.03465</radius>
+            <length>0.04189</length>
           </cylinder>
         </geometry>
         <material>
@@ -44,11 +44,11 @@
       </visual>
 
       <visual name="upper_body">
-        <pose>0 0 0.11014 0 0 0</pose>
+        <pose>0 0 0.09362 0 0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.02826</radius>
-            <length>0.02899</length>
+            <radius>0.03412</radius>
+            <length>0.02464</length>
           </cylinder>
         </geometry>
         <material>
@@ -59,11 +59,11 @@
       </visual>
 
       <visual name="shoulder_1">
-        <pose>0 0 0.12826 0 0 0</pose>
+        <pose>0 0 0.10902 0 0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.02754</radius>
-            <length>0.00725</length>
+            <radius>0.03325</radius>
+            <length>0.00616</length>
           </cylinder>
         </geometry>
         <material>
@@ -73,11 +73,11 @@
       </visual>
 
       <visual name="shoulder_2">
-        <pose>0 0 0.13551 0 0 0</pose>
+        <pose>0 0 0.11518 0 0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.02522</radius>
-            <length>0.00725</length>
+            <radius>0.03045</radius>
+            <length>0.00616</length>
           </cylinder>
         </geometry>
         <material>
@@ -87,11 +87,11 @@
       </visual>
 
       <visual name="shoulder_3">
-        <pose>0 0 0.14275 0 0 0</pose>
+        <pose>0 0 0.12134 0 0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.02261</radius>
-            <length>0.00725</length>
+            <radius>0.02730</radius>
+            <length>0.00616</length>
           </cylinder>
         </geometry>
         <material>
@@ -101,11 +101,11 @@
       </visual>
 
       <visual name="shoulder_4">
-        <pose>0 0 0.15000 0 0 0</pose>
+        <pose>0 0 0.12750 0 0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.01971</radius>
-            <length>0.00725</length>
+            <radius>0.02380</radius>
+            <length>0.00616</length>
           </cylinder>
         </geometry>
         <material>
@@ -115,11 +115,11 @@
       </visual>
 
       <visual name="shoulder_5">
-        <pose>0 0 0.15652 0 0 0</pose>
+        <pose>0 0 0.13304 0 0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.01652</radius>
-            <length>0.00580</length>
+            <radius>0.01994</radius>
+            <length>0.00493</length>
           </cylinder>
         </geometry>
         <material>
@@ -129,11 +129,11 @@
       </visual>
 
       <visual name="neck">
-        <pose>0 0 0.17101 0 0 0</pose>
+        <pose>0 0 0.14536 0 0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.01159</radius>
-            <length>0.02319</length>
+            <radius>0.01399</radius>
+            <length>0.01971</length>
           </cylinder>
         </geometry>
         <material>
@@ -144,11 +144,11 @@
       </visual>
 
       <visual name="red_cap">
-        <pose>0 0 0.19130 0 0 0</pose>
+        <pose>0 0 0.16261 0 0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.01449</radius>
-            <length>0.01739</length>
+            <radius>0.01749</radius>
+            <length>0.01478</length>
           </cylinder>
         </geometry>
         <material>
