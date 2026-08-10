@@ -14,7 +14,7 @@
       <inertia ixx="0.002257" ixy="0" ixz="0" iyy="0.002045" iyz="0" izz="0.002814"/>
     </inertial>
     <collision>
-      <origin xyz="0 0 0.042" rpy="0 0 0"/>
+      <origin xyz="0 0 0.052" rpy="0 0 0"/>
       <geometry><box size="0.138 0.149 0.104"/></geometry>
     </collision>
     <visual>

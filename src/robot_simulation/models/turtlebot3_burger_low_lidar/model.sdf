@@ -19,7 +19,7 @@
         </inertia>
       </inertial>
       <collision name="base_collision">
-        <pose>0 0 0.042 0 0 0</pose>
+        <pose>0 0 0.052 0 0 0</pose>
         <geometry><box><size>0.138 0.149 0.104</size></box></geometry>
       </collision>
       <visual name="base_visual">

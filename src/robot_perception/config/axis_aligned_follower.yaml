@@ -1,0 +1,33 @@
+axis_aligned_follower_node:
+  ros__parameters:
+    plan_topic: /navigation/plan
+    safety_topic: /safety/status
+    odom_topic: /odom
+    desired_cmd_vel_topic: /navigation/desired_cmd_vel
+    status_topic: /navigation/control_status
+    enabled: false
+    stop_at_cp1: false
+    control_rate_hz: 20.0
+    plan_timeout: 0.6
+    safety_timeout: 0.6
+    odom_timeout: 0.5
+    mission_timeout: 60.0
+    plan_stable_duration: 0.6
+    maximum_linear_speed: 0.06
+    minimum_linear_speed: 0.02
+    deceleration_distance: 0.20
+    maximum_angular_speed: 0.30
+    minimum_angular_speed: 0.04
+    turn_gain: 1.2
+    heading_gain: 1.5
+    cross_track_gain: 2.0
+    maximum_heading_correction: 0.12
+    position_tolerance: 0.015
+    heading_tolerance: 0.02
+    cross_track_tolerance: 0.03
+    maximum_cross_track_error: 0.06
+    start_tolerance: 0.03
+    stable_duration: 0.5
+    heading_stable_duration: 0.3
+    stopped_linear_speed: 0.005
+    stopped_angular_speed: 0.02

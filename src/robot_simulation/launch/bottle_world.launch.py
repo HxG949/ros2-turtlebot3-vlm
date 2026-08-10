@@ -10,6 +10,7 @@ from launch.actions import (
     OpaqueFunction,
     SetEnvironmentVariable,
 )
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import (
     EnvironmentVariable,
@@ -133,6 +134,7 @@ def generate_launch_description():
         FindPackageShare('gazebo_ros'),
         'launch',
     ])
+    use_gui = LaunchConfiguration('use_gui')
     gazebo_server = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution([
             gazebo_launch_directory,
@@ -146,6 +148,7 @@ def generate_launch_description():
             gazebo_launch_directory,
             'gzclient.launch.py',
         ])),
+        condition=IfCondition(use_gui),
     )
 
     robot_state_publisher = Node(
@@ -183,6 +186,11 @@ def generate_launch_description():
             'layout_seed',
             default_value='42',
             description='Seed used to generate a reproducible 2D layout',
+        ),
+        DeclareLaunchArgument(
+            'use_gui',
+            default_value='true',
+            description='Start the Gazebo graphical client',
         ),
         SetEnvironmentVariable(
             'GAZEBO_MODEL_PATH',

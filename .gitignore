@@ -7,3 +7,4 @@ log/
 *.pyc
 __pycache__/
 handoff/
+local_knowledge/

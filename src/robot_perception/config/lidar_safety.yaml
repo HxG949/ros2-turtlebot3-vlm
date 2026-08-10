@@ -2,8 +2,14 @@ lidar_safety_node:
   ros__parameters:
     scan_topic: /scan
     status_topic: /safety/status
-    emergency_distance: 0.35
+    emergency_distance: 0.175
     side_safe_distance: 0.35
     front_half_angle_deg: 20.0
     side_min_angle_deg: 20.0
     side_max_angle_deg: 100.0
+    minimum_valid_fraction: 0.8
+    rotation_safe_distance: 0.18
+    rotation_blocked_beam_count: 3
+    rotation_unsafe_confirmation_scans: 5
+    laser_offset_x: -0.032
+    laser_offset_y: 0.0

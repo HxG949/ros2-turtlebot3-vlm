@@ -1,0 +1,31 @@
+axis_aligned_planner_node:
+  ros__parameters:
+    scan_topic: /scan
+    odom_topic: /odom
+    plan_topic: /navigation/plan
+    path_topic: /navigation/path
+    marker_topic: /navigation/markers
+    frame_id: odom
+    planning_rate_hz: 5.0
+    scan_timeout: 0.5
+    odom_timeout: 0.5
+    minimum_scan_points: 10
+    minimum_scan_valid_fraction: 0.8
+    obstacle_min_range_padding: 0.015
+    self_filter_padding: 0.02
+    laser_offset_x: -0.032
+    laser_offset_y: 0.0
+    start_x: -0.9015
+    start_y: -0.845
+    cp1_x: -0.39
+    cp1_y: -0.845
+    obstacle_x_min: -0.20
+    obstacle_x_max: 0.0
+    obstacle_filter_padding: 0.03
+    cp2_x: 0.20
+    field_y_min: -1.05
+    field_y_max: 1.05
+    robot_radius: 0.105
+    safety_margin: 0.070
+    candidate_spacing: 0.02
+    lane_selection_buffer: 0.05

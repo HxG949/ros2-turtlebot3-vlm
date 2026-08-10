@@ -1,0 +1,8 @@
+cmd_vel_watchdog_node:
+  ros__parameters:
+    arbiter_status_topic: /navigation/safety_arbiter_status
+    cmd_vel_topic: /cmd_vel
+    status_topic: /navigation/cmd_vel_watchdog_status
+    check_rate_hz: 20.0
+    heartbeat_timeout: 0.25
+    startup_timeout: 2.0
