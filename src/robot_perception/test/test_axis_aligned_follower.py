@@ -7,16 +7,48 @@ from robot_perception.axis_aligned_follower_node import calculate_turn_speed
 from robot_perception.axis_aligned_follower_node import execution_plan_signature
 from robot_perception.axis_aligned_follower_node import heading_is_settled
 from robot_perception.axis_aligned_follower_node import plan_is_stable
+from robot_perception.axis_aligned_follower_node import pass_through_is_safe
+from robot_perception.axis_aligned_follower_node import (
+    parking_envelope_is_inside,
+)
 from robot_perception.axis_aligned_follower_node import segment_heading
-from robot_perception.axis_aligned_follower_node import validate_axis_aligned_waypoints
+from robot_perception.axis_aligned_follower_node import (
+    validate_axis_aligned_waypoints,
+)
 
 
 def make_waypoints():
     return [
-        {'role': 'start', 'x': -0.9015, 'y': -0.845},
-        {'role': 'cp1', 'x': -0.39, 'y': -0.845},
-        {'role': 'lane_entry', 'x': -0.39, 'y': -0.115},
-        {'role': 'cp2', 'x': 0.20, 'y': -0.115},
+        {
+            'role': 'start', 'x': -0.9015, 'y': -0.845,
+            'stop_required': True,
+        },
+        {
+            'role': 'cp1', 'x': -0.39, 'y': -0.845,
+            'stop_required': True,
+        },
+        {
+            'role': 'lane_entry', 'x': -0.39, 'y': -0.115,
+            'stop_required': True,
+        },
+        {
+            'role': 'cp2', 'x': 0.20, 'y': -0.115,
+            'stop_required': False,
+        },
+        {
+            'role': 'parking_transition', 'x': 0.4015, 'y': -0.115,
+            'stop_required': True,
+        },
+        {
+            'role': 'parking_approach', 'x': 0.4015, 'y': 0.0,
+            'stop_required': True,
+        },
+        {
+            'role': 'parking_goal', 'x': 0.8015, 'y': 0.0,
+            'stop_required': True, 'final_yaw': math.pi,
+            'parking_space_id': 'space_2',
+            'parking_length': 0.297, 'parking_width': 0.210,
+        },
     ]
 
 
@@ -27,7 +59,14 @@ def test_path_segments_have_axis_aligned_headings():
         for previous, target in zip(waypoints, waypoints[1:])
     ]
 
-    assert headings == [0.0, math.pi / 2.0, 0.0]
+    assert headings == [
+        0.0,
+        math.pi / 2.0,
+        0.0,
+        0.0,
+        math.pi / 2.0,
+        0.0,
+    ]
 
 
 def test_diagonal_segment_is_rejected():
@@ -61,6 +100,7 @@ def test_cp1_commissioning_ignores_downstream_lane_changes():
     second_plan = make_waypoints()
     second_plan[2]['y'] = 0.10
     second_plan[3]['y'] = 0.10
+    second_plan[4]['y'] = 0.10
     second_plan = validate_axis_aligned_waypoints(second_plan)
 
     assert execution_plan_signature(first_plan, True) == (
@@ -81,3 +121,47 @@ def test_plan_must_remain_unchanged_for_stable_duration():
     assert plan_is_stable(10.59, 10.0, 0.6) is False
     assert plan_is_stable(10.60, 10.0, 0.6) is True
     assert plan_is_stable(10.60, None, 0.6) is False
+
+
+def test_cp2_must_be_a_collinear_pass_through_waypoint():
+    waypoints = make_waypoints()
+    waypoints[4]['x'] = 0.20
+    waypoints[4]['y'] = 0.0
+
+    with pytest.raises(ValueError, match='collinear'):
+        validate_axis_aligned_waypoints(waypoints)
+
+
+def test_robot_envelope_must_fit_inside_rotated_parking_space():
+    goal = validate_axis_aligned_waypoints(make_waypoints())[-1]
+
+    assert parking_envelope_is_inside(
+        0.8015,
+        0.0,
+        math.pi,
+        goal,
+        0.210,
+        0.178,
+    )
+    assert not parking_envelope_is_inside(
+        0.8015,
+        0.020,
+        math.pi,
+        goal,
+        0.210,
+        0.178,
+    )
+    assert not parking_envelope_is_inside(
+        0.8015,
+        0.014,
+        math.pi - 0.049,
+        goal,
+        0.210,
+        0.178,
+    )
+
+
+def test_cp2_pass_through_requires_stable_heading():
+    assert pass_through_is_safe(0.01, 0.01, 0.0, 0.02, 0.02)
+    assert not pass_through_is_safe(0.03, 0.01, 0.0, 0.02, 0.02)
+    assert not pass_through_is_safe(0.01, 0.03, 0.0, 0.02, 0.02)

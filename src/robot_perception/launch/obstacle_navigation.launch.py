@@ -17,6 +17,7 @@ def generate_launch_description():
         'obstacle_planning.rviz',
     ])
     enable_motion = LaunchConfiguration('enable_motion')
+    parking_space_id = LaunchConfiguration('parking_space_id')
     stop_at_cp1 = LaunchConfiguration('stop_at_cp1')
     use_rviz = LaunchConfiguration('use_rviz')
 
@@ -25,6 +26,11 @@ def generate_launch_description():
             'enable_motion',
             default_value='false',
             description='Allow the follower to publish non-zero velocity',
+        ),
+        DeclareLaunchArgument(
+            'parking_space_id',
+            default_value='space_2',
+            description='Parking space ID selected for the mission',
         ),
         DeclareLaunchArgument(
             'stop_at_cp1',
@@ -44,6 +50,23 @@ def generate_launch_description():
                 config_directory,
                 'lidar_safety.yaml',
             ])],
+        ),
+        Node(
+            package='robot_perception',
+            executable='parking_target_node',
+            output='screen',
+            parameters=[
+                PathJoinSubstitution([
+                    config_directory,
+                    'parking_targets.yaml',
+                ]),
+                {
+                    'selected_space_id': ParameterValue(
+                        parking_space_id,
+                        value_type=str,
+                    ),
+                },
+            ],
         ),
         Node(
             package='robot_perception',

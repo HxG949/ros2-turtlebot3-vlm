@@ -18,6 +18,7 @@ setup(
                 'config/lidar_safety.yaml',
                 'config/motion_controller.yaml',
                 'config/parking_decision.yaml',
+                'config/parking_targets.yaml',
                 'config/safety_arbiter.yaml',
                 'config/vlm_inference.yaml',
         ]),
@@ -63,6 +64,8 @@ setup(
             'robot_perception.motion_controller_node:main',
             'parking_decision_node = '
             'robot_perception.parking_decision_node:main',
+            'parking_target_node = '
+            'robot_perception.parking_target_node:main',
             'safety_arbiter_node = '
             'robot_perception.safety_arbiter_node:main',
             'vlm_inference_node = robot_perception.vlm_inference_node:main',

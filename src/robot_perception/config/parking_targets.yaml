@@ -1,0 +1,11 @@
+parking_target_node:
+  ros__parameters:
+    candidates_topic: /parking/candidates
+    selected_target_topic: /parking/selected_target
+    frame_id: odom
+    publish_rate_hz: 2.0
+    selected_space_id: space_2
+    parking_spaces_json: >-
+      [{"id":"space_2","center_x":0.8015,"center_y":0.0,
+      "entry_yaw":0.0,"final_yaw":3.141592653589793,
+      "length":0.297,"width":0.210,"approach_distance":0.4}]

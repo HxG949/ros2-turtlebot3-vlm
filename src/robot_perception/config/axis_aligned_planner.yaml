@@ -3,12 +3,14 @@ axis_aligned_planner_node:
     scan_topic: /scan
     odom_topic: /odom
     plan_topic: /navigation/plan
+    parking_target_topic: /parking/selected_target
     path_topic: /navigation/path
     marker_topic: /navigation/markers
     frame_id: odom
     planning_rate_hz: 5.0
     scan_timeout: 0.5
     odom_timeout: 0.5
+    parking_target_timeout: 1.0
     minimum_scan_points: 10
     minimum_scan_valid_fraction: 0.8
     obstacle_min_range_padding: 0.015
@@ -26,6 +28,8 @@ axis_aligned_planner_node:
     field_y_min: -1.05
     field_y_max: 1.05
     robot_radius: 0.105
+    robot_footprint_length: 0.210
+    robot_footprint_width: 0.178
     safety_margin: 0.070
     candidate_spacing: 0.02
     lane_selection_buffer: 0.05

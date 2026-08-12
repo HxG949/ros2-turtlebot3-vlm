@@ -4,6 +4,7 @@ from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -16,8 +17,14 @@ def generate_launch_description():
         'obstacle_planning.rviz',
     ])
     use_rviz = LaunchConfiguration('use_rviz')
+    parking_space_id = LaunchConfiguration('parking_space_id')
 
     return LaunchDescription([
+        DeclareLaunchArgument(
+            'parking_space_id',
+            default_value='space_2',
+            description='Parking space ID selected for planning',
+        ),
         DeclareLaunchArgument(
             'use_rviz',
             default_value='true',
@@ -31,6 +38,23 @@ def generate_launch_description():
                 config_directory,
                 'lidar_safety.yaml',
             ])],
+        ),
+        Node(
+            package='robot_perception',
+            executable='parking_target_node',
+            output='screen',
+            parameters=[
+                PathJoinSubstitution([
+                    config_directory,
+                    'parking_targets.yaml',
+                ]),
+                {
+                    'selected_space_id': ParameterValue(
+                        parking_space_id,
+                        value_type=str,
+                    ),
+                },
+            ],
         ),
         Node(
             package='robot_perception',

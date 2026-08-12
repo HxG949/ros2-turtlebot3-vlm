@@ -15,8 +15,8 @@ def normalize_angle(angle):
 
 
 def validate_axis_aligned_waypoints(waypoints, tolerance=1e-6):
-    if not isinstance(waypoints, list) or len(waypoints) < 3:
-        raise ValueError('at least start, CP1, and CP2 are required')
+    if not isinstance(waypoints, list) or len(waypoints) < 5:
+        raise ValueError('a complete obstacle and parking path is required')
 
     normalized = []
     for waypoint in waypoints:
@@ -25,9 +25,11 @@ def validate_axis_aligned_waypoints(waypoints, tolerance=1e-6):
         role = str(waypoint.get('role', '')).strip()
         x_position = waypoint.get('x')
         y_position = waypoint.get('y')
+        stop_required = waypoint.get('stop_required')
         values = (x_position, y_position)
         if (
             not role
+            or not isinstance(stop_required, bool)
             or any(isinstance(value, bool) for value in values)
             or not all(isinstance(value, (int, float)) for value in values)
             or not all(math.isfinite(value) for value in values)
@@ -37,13 +39,78 @@ def validate_axis_aligned_waypoints(waypoints, tolerance=1e-6):
             'role': role,
             'x': float(x_position),
             'y': float(y_position),
+            'stop_required': stop_required,
         })
 
     roles = [waypoint['role'] for waypoint in normalized]
     if roles[0] != 'start' or roles[1] != 'cp1':
         raise ValueError('path must begin with start followed by CP1')
-    if roles[-1] != 'cp2':
-        raise ValueError('path must end at CP2')
+    if roles[-1] != 'parking_goal':
+        raise ValueError('path must end at the parking goal')
+    allowed_role_sequences = {
+        (
+            'start', 'cp1', 'cp2', 'parking_approach', 'parking_goal',
+        ),
+        (
+            'start', 'cp1', 'cp2', 'parking_transition',
+            'parking_approach', 'parking_goal',
+        ),
+        (
+            'start', 'cp1', 'lane_entry', 'cp2',
+            'parking_approach', 'parking_goal',
+        ),
+        (
+            'start', 'cp1', 'lane_entry', 'cp2',
+            'parking_transition', 'parking_approach', 'parking_goal',
+        ),
+    }
+    if tuple(roles) not in allowed_role_sequences:
+        raise ValueError('path waypoint roles are not in the required order')
+    cp2_index = roles.index('cp2')
+    if normalized[cp2_index]['stop_required']:
+        raise ValueError('CP2 must be a pass-through waypoint')
+    if any(
+        not waypoint['stop_required']
+        for index, waypoint in enumerate(normalized)
+        if index != cp2_index
+    ):
+        raise ValueError('only CP2 may be a pass-through waypoint')
+
+    goal_source = waypoints[-1]
+    parking_fields = (
+        'final_yaw',
+        'parking_length',
+        'parking_width',
+    )
+    parking_values = {
+        field: goal_source.get(field)
+        for field in parking_fields
+    }
+    parking_space_id = str(goal_source.get('parking_space_id', '')).strip()
+    if (
+        not parking_space_id
+        or any(
+            isinstance(value, bool)
+            for value in parking_values.values()
+        )
+        or not all(
+            isinstance(value, (int, float))
+            for value in parking_values.values()
+        )
+        or not all(
+            math.isfinite(value)
+            for value in parking_values.values()
+        )
+        or parking_values['parking_length'] <= 0.0
+        or parking_values['parking_width'] <= 0.0
+    ):
+        raise ValueError('parking goal fields must be valid')
+    normalized[-1].update({
+        'final_yaw': float(parking_values['final_yaw']),
+        'parking_space_id': parking_space_id,
+        'parking_length': float(parking_values['parking_length']),
+        'parking_width': float(parking_values['parking_width']),
+    })
 
     for previous, target in zip(normalized, normalized[1:]):
         delta_x = target['x'] - previous['x']
@@ -52,6 +119,16 @@ def validate_axis_aligned_waypoints(waypoints, tolerance=1e-6):
         y_changes = abs(delta_y) > tolerance
         if x_changes == y_changes:
             raise ValueError('path segments must be non-zero and axis-aligned')
+
+    cp2_previous = normalized[cp2_index - 1]
+    cp2 = normalized[cp2_index]
+    cp2_next = normalized[cp2_index + 1]
+    if not math.isclose(
+        segment_heading(cp2_previous, cp2),
+        segment_heading(cp2, cp2_next),
+        abs_tol=tolerance,
+    ):
+        raise ValueError('CP2 pass-through segments must be collinear')
 
     return normalized
 
@@ -67,8 +144,63 @@ def segment_heading(previous, target):
 def execution_plan_signature(waypoints, stop_at_cp1):
     active_waypoints = waypoints[:2] if stop_at_cp1 else waypoints
     return tuple(
-        (waypoint['role'], waypoint['x'], waypoint['y'])
+        (
+            waypoint['role'],
+            waypoint['x'],
+            waypoint['y'],
+            waypoint['stop_required'],
+            waypoint.get('final_yaw'),
+            waypoint.get('parking_space_id'),
+            waypoint.get('parking_length'),
+            waypoint.get('parking_width'),
+        )
         for waypoint in active_waypoints
+    )
+
+
+def parking_envelope_is_inside(
+    robot_x,
+    robot_y,
+    robot_yaw,
+    goal,
+    robot_length,
+    robot_width,
+    tolerance=1e-9,
+):
+    delta_x = robot_x - goal['x']
+    delta_y = robot_y - goal['y']
+    cos_yaw = math.cos(goal['final_yaw'])
+    sin_yaw = math.sin(goal['final_yaw'])
+    local_x = cos_yaw * delta_x + sin_yaw * delta_y
+    local_y = -sin_yaw * delta_x + cos_yaw * delta_y
+    relative_yaw = normalize_angle(robot_yaw - goal['final_yaw'])
+    projected_half_length = (
+        abs(math.cos(relative_yaw)) * robot_length / 2.0
+        + abs(math.sin(relative_yaw)) * robot_width / 2.0
+    )
+    projected_half_width = (
+        abs(math.sin(relative_yaw)) * robot_length / 2.0
+        + abs(math.cos(relative_yaw)) * robot_width / 2.0
+    )
+    return (
+        abs(local_x) + projected_half_length
+        <= goal['parking_length'] / 2.0 + tolerance
+        and abs(local_y) + projected_half_width
+        <= goal['parking_width'] / 2.0 + tolerance
+    )
+
+
+def pass_through_is_safe(
+    robot_yaw,
+    robot_angular_speed,
+    desired_yaw,
+    maximum_heading_error,
+    maximum_angular_speed,
+):
+    return (
+        abs(normalize_angle(desired_yaw - robot_yaw))
+        <= maximum_heading_error
+        and abs(robot_angular_speed) <= maximum_angular_speed
     )
 
 
@@ -160,6 +292,10 @@ class AxisAlignedFollowerNode(Node):
         self.declare_parameter('heading_stable_duration', 0.3)
         self.declare_parameter('stopped_linear_speed', 0.005)
         self.declare_parameter('stopped_angular_speed', 0.02)
+        self.declare_parameter('pass_through_max_angular_speed', 0.02)
+        self.declare_parameter('robot_footprint_length', 0.210)
+        self.declare_parameter('robot_footprint_width', 0.178)
+        self.declare_parameter('final_yaw_tolerance', 0.05)
 
         plan_topic = self.get_parameter('plan_topic').value
         safety_topic = self.get_parameter('safety_topic').value
@@ -224,6 +360,18 @@ class AxisAlignedFollowerNode(Node):
         self.stopped_angular_speed = self.get_parameter(
             'stopped_angular_speed'
         ).value
+        self.pass_through_max_angular_speed = self.get_parameter(
+            'pass_through_max_angular_speed'
+        ).value
+        self.robot_footprint_length = self.get_parameter(
+            'robot_footprint_length'
+        ).value
+        self.robot_footprint_width = self.get_parameter(
+            'robot_footprint_width'
+        ).value
+        self.final_yaw_tolerance = self.get_parameter(
+            'final_yaw_tolerance'
+        ).value
 
         topics = (
             plan_topic,
@@ -252,6 +400,8 @@ class AxisAlignedFollowerNode(Node):
         self.aligned_target_index = None
         self.mission_started_at = None
         self.mission_complete = False
+        self.completion_reason = None
+        self.final_alignment_started = False
         self.fault_reason = None
         self.last_control_status = None
         self.parse_error_reported = {'plan': False, 'safety': False}
@@ -321,9 +471,15 @@ class AxisAlignedFollowerNode(Node):
             self.heading_stable_duration,
             self.stopped_linear_speed,
             self.stopped_angular_speed,
+            self.pass_through_max_angular_speed,
+            self.robot_footprint_length,
+            self.robot_footprint_width,
+            self.final_yaw_tolerance,
         )
         if any(value <= 0.0 for value in positive_values):
-            raise ValueError('controller rates, limits, and tolerances must be positive')
+            raise ValueError(
+                'controller rates, limits, and tolerances must be positive'
+            )
         if self.minimum_linear_speed > self.maximum_linear_speed:
             raise ValueError('minimum linear speed exceeds maximum')
         if self.minimum_angular_speed > self.maximum_angular_speed:
@@ -332,6 +488,8 @@ class AxisAlignedFollowerNode(Node):
             raise ValueError('cross-track tolerance exceeds maximum error')
 
     def plan_callback(self, message):
+        if self.mission_complete:
+            return
         result = self.parse_json(message, 'plan')
         self.plan_received_at = time.monotonic()
         if result is None or result.get('valid') is not True:
@@ -433,6 +591,8 @@ class AxisAlignedFollowerNode(Node):
         self.aligned_target_index = None
         self.mission_started_at = None
         self.mission_complete = False
+        self.completion_reason = None
+        self.final_alignment_started = False
         self.fault_reason = None
 
     def control_timer_callback(self):
@@ -453,6 +613,8 @@ class AxisAlignedFollowerNode(Node):
         stop = Twist()
         if not self.enabled:
             return 'DISABLED', 'motion_disabled', stop, None, None
+        if self.mission_complete:
+            return 'COMPLETE', self.completion_reason, stop, None, 0.0
         if self.fault_reason is not None:
             return 'FAULT', self.fault_reason, stop, None, None
         if self.waypoints is None or self.plan_received_at is None:
@@ -471,9 +633,6 @@ class AxisAlignedFollowerNode(Node):
             return 'WAITING', 'waiting_for_odom', stop, None, None
         if now - self.odom_received_at > self.odom_timeout:
             return self.stop_or_latch('odom_timeout', stop)
-        if self.mission_complete:
-            return 'COMPLETE', 'mission_complete', stop, None, 0.0
-
         if self.mission_started_at is None:
             if not plan_is_stable(
                 now,
@@ -505,8 +664,8 @@ class AxisAlignedFollowerNode(Node):
     def follow_current_segment(self, now):
         stop = Twist()
         if self.target_index >= len(self.waypoints):
-            self.mission_complete = True
-            return 'COMPLETE', 'cp2_reached', stop, None, 0.0
+            self.fault_reason = 'parking_goal_missing'
+            return 'FAULT', self.fault_reason, stop, None, None
 
         previous = self.waypoints[self.target_index - 1]
         target = self.waypoints[self.target_index]
@@ -526,6 +685,30 @@ class AxisAlignedFollowerNode(Node):
             + direction_x * relative_y
         )
         cross_track_error = abs(signed_cross_track)
+
+        if (
+            not target['stop_required']
+            and -self.position_tolerance <= remaining <= self.position_tolerance
+            and cross_track_error <= self.cross_track_tolerance
+        ):
+            if not pass_through_is_safe(
+                self.robot_yaw,
+                self.robot_angular_speed,
+                desired_yaw,
+                self.heading_tolerance,
+                self.pass_through_max_angular_speed,
+            ):
+                self.fault_reason = 'cp2_heading_unstable'
+                return (
+                    'FAULT',
+                    self.fault_reason,
+                    stop,
+                    target['role'],
+                    remaining,
+                )
+            self.target_index += 1
+            self.aligned_target_index = self.target_index
+            return self.follow_current_segment(now)
 
         if remaining < -self.position_tolerance:
             self.fault_reason = f'{target["role"]}_overshoot'
@@ -650,8 +833,15 @@ class AxisAlignedFollowerNode(Node):
         corrected_yaw = desired_yaw + correction
         heading_error = normalize_angle(corrected_yaw - self.robot_yaw)
         command = Twist()
+        speed_remaining = remaining
+        if not target['stop_required']:
+            next_target = self.waypoints[self.target_index + 1]
+            speed_remaining += math.hypot(
+                next_target['x'] - target['x'],
+                next_target['y'] - target['y'],
+            )
         command.linear.x = calculate_linear_speed(
-            remaining,
+            speed_remaining,
             self.position_tolerance,
             self.deceleration_distance,
             self.minimum_linear_speed,
@@ -691,11 +881,14 @@ class AxisAlignedFollowerNode(Node):
                 remaining,
             )
 
+        if target['role'] == 'parking_goal':
+            return self.finish_parking(now, target, remaining)
+
         stopped = (
             abs(self.robot_linear_speed) <= self.stopped_linear_speed
             and abs(self.robot_angular_speed) <= self.stopped_angular_speed
         )
-        if not stopped:
+        if not self.final_alignment_started and not stopped:
             self.arrival_started_at = None
             return (
                 'STOPPING',
@@ -718,6 +911,7 @@ class AxisAlignedFollowerNode(Node):
 
         if target['role'] == 'cp1' and self.stop_at_cp1:
             self.mission_complete = True
+            self.completion_reason = 'cp1_reached'
             return 'COMPLETE', 'cp1_reached', stop, 'cp1', remaining
 
         self.target_index += 1
@@ -725,17 +919,114 @@ class AxisAlignedFollowerNode(Node):
         self.heading_stable_started_at = None
         self.aligned_target_index = None
         if self.target_index >= len(self.waypoints):
-            self.mission_complete = True
+            self.fault_reason = 'parking_goal_missing'
+            return 'FAULT', self.fault_reason, stop, None, None
+        return (
+            'WAYPOINT_REACHED',
+            f'{target["role"]}_reached',
+            stop,
+            target['role'],
+            remaining,
+        )
+
+    def finish_parking(self, now, target, remaining):
+        stop = Twist()
+        stopped = (
+            abs(self.robot_linear_speed) <= self.stopped_linear_speed
+            and abs(self.robot_angular_speed) <= self.stopped_angular_speed
+        )
+        if not self.final_alignment_started and not stopped:
+            self.arrival_started_at = None
             return (
-                'COMPLETE',
-                'cp2_reached',
+                'STOPPING',
+                'stopping_at_parking_goal',
                 stop,
                 target['role'],
                 remaining,
             )
+        self.final_alignment_started = True
+
+        heading_error = normalize_angle(target['final_yaw'] - self.robot_yaw)
+        if abs(heading_error) > self.final_yaw_tolerance:
+            self.arrival_started_at = None
+            if self.safety.get('rotation_caution') is True:
+                return (
+                    'ROTATION_CLEARANCE_WAIT',
+                    'confirming_final_rotation_clearance',
+                    stop,
+                    target['role'],
+                    remaining,
+                )
+            if self.safety.get('rotation_safe') is not True:
+                self.fault_reason = 'final_rotation_space_unsafe'
+                return (
+                    'FAULT',
+                    self.fault_reason,
+                    stop,
+                    target['role'],
+                    remaining,
+                )
+            command = Twist()
+            command.angular.z = calculate_turn_speed(
+                heading_error,
+                self.turn_gain,
+                self.minimum_angular_speed,
+                self.maximum_angular_speed,
+            )
+            return (
+                'FINAL_ALIGNMENT',
+                'aligning_final_yaw',
+                command,
+                target['role'],
+                remaining,
+            )
+
+        if not parking_envelope_is_inside(
+            self.robot_x,
+            self.robot_y,
+            self.robot_yaw,
+            target,
+            self.robot_footprint_length,
+            self.robot_footprint_width,
+        ):
+            self.fault_reason = 'parking_envelope_outside_space'
+            return (
+                'FAULT',
+                self.fault_reason,
+                stop,
+                target['role'],
+                remaining,
+            )
+
+        if not heading_is_settled(
+            heading_error,
+            self.robot_angular_speed,
+            self.final_yaw_tolerance,
+            self.stopped_angular_speed,
+        ):
+            self.arrival_started_at = None
+            return (
+                'FINAL_ALIGNMENT_SETTLING',
+                'stopping_final_rotation',
+                stop,
+                target['role'],
+                remaining,
+            )
+        if self.arrival_started_at is None:
+            self.arrival_started_at = now
+        if now - self.arrival_started_at < self.stable_duration:
+            return (
+                'PARKING_SETTLING',
+                'settling_in_parking_space',
+                stop,
+                target['role'],
+                remaining,
+            )
+        self.mission_complete = True
+        self.completion_reason = 'parking_complete'
         return (
-            'WAYPOINT_REACHED',
-            f'{target["role"]}_reached',
+            'COMPLETE',
+            'parking_complete',
             stop,
             target['role'],
             remaining,

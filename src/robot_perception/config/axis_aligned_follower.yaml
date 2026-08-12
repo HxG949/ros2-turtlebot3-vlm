@@ -11,7 +11,7 @@ axis_aligned_follower_node:
     plan_timeout: 0.6
     safety_timeout: 0.6
     odom_timeout: 0.5
-    mission_timeout: 60.0
+    mission_timeout: 120.0
     plan_stable_duration: 0.6
     maximum_linear_speed: 0.06
     minimum_linear_speed: 0.02
@@ -31,3 +31,7 @@ axis_aligned_follower_node:
     heading_stable_duration: 0.3
     stopped_linear_speed: 0.005
     stopped_angular_speed: 0.02
+    pass_through_max_angular_speed: 0.02
+    robot_footprint_length: 0.210
+    robot_footprint_width: 0.178
+    final_yaw_tolerance: 0.05

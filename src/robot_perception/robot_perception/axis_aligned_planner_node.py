@@ -28,6 +28,20 @@ class PlanningGeometry:
     robot_radius: float
     safety_margin: float
     candidate_spacing: float
+    robot_footprint_length: float = 0.210
+    robot_footprint_width: float = 0.178
+
+
+@dataclass(frozen=True)
+class ParkingTarget:
+    space_id: str
+    center_x: float
+    center_y: float
+    entry_yaw: float
+    final_yaw: float
+    length: float
+    width: float
+    approach_distance: float
 
 
 def point_to_horizontal_segment_distance(
@@ -98,6 +112,7 @@ def generate_lane_candidates(geometry):
 def plan_axis_aligned_path(
     obstacle_points,
     geometry,
+    parking_target,
     committed_y=None,
     lane_selection_buffer=0.0,
 ):
@@ -174,11 +189,13 @@ def plan_axis_aligned_path(
             'role': 'start',
             'x': round(geometry.start_x, 4),
             'y': round(geometry.start_y, 4),
+            'stop_required': True,
         },
         {
             'role': 'cp1',
             'x': round(geometry.cp1_x, 4),
             'y': round(geometry.cp1_y, 4),
+            'stop_required': True,
         },
     ]
     if not math.isclose(selected_y, geometry.cp1_y, abs_tol=1e-6):
@@ -186,12 +203,29 @@ def plan_axis_aligned_path(
             'role': 'lane_entry',
             'x': round(geometry.cp1_x, 4),
             'y': round(selected_y, 4),
+            'stop_required': True,
         })
     waypoints.append({
         'role': 'cp2',
         'x': round(geometry.cp2_x, 4),
         'y': round(selected_y, 4),
+        'stop_required': False,
     })
+
+    parking_waypoints = make_parking_waypoints(
+        geometry,
+        selected_y,
+        parking_target,
+    )
+    if parking_waypoints is None:
+        return {
+            'valid': False,
+            'reason': 'parking_route_unsupported',
+            'selected_y': None,
+            'minimum_clearance': None,
+            'waypoints': [],
+        }
+    waypoints.extend(parking_waypoints)
 
     return {
         'valid': True,
@@ -199,7 +233,141 @@ def plan_axis_aligned_path(
         'selected_y': round(selected_y, 4),
         'minimum_clearance': round(clearance, 4),
         'waypoints': waypoints,
+        'parking_space_id': parking_target.space_id,
     }
+
+
+def make_parking_waypoints(geometry, selected_y, target):
+    entry_yaw = cardinal_heading(target.entry_yaw)
+    if entry_yaw is None or not parking_target_is_feasible(geometry, target):
+        return None
+    entry_cos = math.cos(entry_yaw)
+    entry_sin = math.sin(entry_yaw)
+
+    approach_x = target.center_x - target.approach_distance * entry_cos
+    approach_y = target.center_y - target.approach_distance * entry_sin
+    center_x_min = geometry.start_x + geometry.robot_radius
+    center_x_max = 1.05 - geometry.robot_radius
+    center_y_min = geometry.field_y_min + geometry.robot_radius
+    center_y_max = geometry.field_y_max - geometry.robot_radius
+    points = (
+        (approach_x, approach_y),
+        (target.center_x, target.center_y),
+    )
+    if not all(
+        center_x_min <= point_x <= center_x_max
+        and center_y_min <= point_y <= center_y_max
+        for point_x, point_y in points
+    ):
+        return None
+
+    # Continue through CP2 before changing direction outside the obstacle band.
+    if approach_x <= geometry.cp2_x + 1e-6:
+        return None
+
+    waypoints = []
+    transition = (approach_x, selected_y)
+    approach = (approach_x, approach_y)
+    if not math.isclose(selected_y, approach_y, abs_tol=1e-6):
+        waypoints.append({
+            'role': 'parking_transition',
+            'x': round(transition[0], 4),
+            'y': round(transition[1], 4),
+            'stop_required': True,
+        })
+    waypoints.append({
+        'role': 'parking_approach',
+        'x': round(approach[0], 4),
+        'y': round(approach[1], 4),
+        'stop_required': True,
+    })
+    waypoints.append({
+        'role': 'parking_goal',
+        'x': round(target.center_x, 4),
+        'y': round(target.center_y, 4),
+        'stop_required': True,
+        'final_yaw': target.final_yaw,
+        'parking_space_id': target.space_id,
+        'parking_length': target.length,
+        'parking_width': target.width,
+    })
+    return waypoints
+
+
+def cardinal_heading(yaw, tolerance=1e-6):
+    candidates = (0.0, math.pi / 2.0, math.pi, -math.pi / 2.0)
+    return next(
+        (
+            candidate
+            for candidate in candidates
+            if abs(math.atan2(
+                math.sin(yaw - candidate),
+                math.cos(yaw - candidate),
+            )) <= tolerance
+        ),
+        None,
+    )
+
+
+def parking_target_is_feasible(geometry, target):
+    entry_yaw = cardinal_heading(target.entry_yaw)
+    final_yaw = cardinal_heading(target.final_yaw)
+    if entry_yaw is None or final_yaw is None:
+        return False
+    if (
+        target.length + 1e-9 < geometry.robot_footprint_length
+        or target.width + 1e-9 < geometry.robot_footprint_width
+    ):
+        return False
+
+    cos_yaw = abs(math.cos(final_yaw))
+    sin_yaw = abs(math.sin(final_yaw))
+    half_x = (target.length * cos_yaw + target.width * sin_yaw) / 2.0
+    half_y = (target.length * sin_yaw + target.width * cos_yaw) / 2.0
+    return (
+        -1.05 <= target.center_x - half_x
+        and target.center_x + half_x <= 1.05
+        and geometry.field_y_min <= target.center_y - half_y
+        and target.center_y + half_y <= geometry.field_y_max
+    )
+
+
+def parse_parking_target(result, expected_frame):
+    if not isinstance(result, dict) or result.get('valid') is not True:
+        raise ValueError('parking target must be valid')
+    if result.get('frame_id') != expected_frame:
+        raise ValueError('parking target frame does not match planning frame')
+    target = result.get('target')
+    if not isinstance(target, dict):
+        raise ValueError('parking target must be an object')
+    fields = (
+        'center_x',
+        'center_y',
+        'entry_yaw',
+        'final_yaw',
+        'length',
+        'width',
+        'approach_distance',
+    )
+    values = {field: target.get(field) for field in fields}
+    space_id = str(target.get('id', '')).strip()
+    if (
+        not space_id
+        or any(isinstance(value, bool) for value in values.values())
+        or not all(
+            isinstance(value, (int, float))
+            for value in values.values()
+        )
+        or not all(math.isfinite(value) for value in values.values())
+        or values['length'] <= 0.0
+        or values['width'] <= 0.0
+        or values['approach_distance'] <= 0.0
+    ):
+        raise ValueError('parking target fields must be valid')
+    return ParkingTarget(
+        space_id=space_id,
+        **{field: float(value) for field, value in values.items()},
+    )
 
 
 class AxisAlignedPlannerNode(Node):
@@ -209,12 +377,17 @@ class AxisAlignedPlannerNode(Node):
         self.declare_parameter('scan_topic', '/scan')
         self.declare_parameter('odom_topic', '/odom')
         self.declare_parameter('plan_topic', '/navigation/plan')
+        self.declare_parameter(
+            'parking_target_topic',
+            '/parking/selected_target',
+        )
         self.declare_parameter('path_topic', '/navigation/path')
         self.declare_parameter('marker_topic', '/navigation/markers')
         self.declare_parameter('frame_id', 'odom')
         self.declare_parameter('planning_rate_hz', 5.0)
         self.declare_parameter('scan_timeout', 0.5)
         self.declare_parameter('odom_timeout', 0.5)
+        self.declare_parameter('parking_target_timeout', 1.0)
         self.declare_parameter('minimum_scan_points', 10)
         self.declare_parameter('minimum_scan_valid_fraction', 0.8)
         self.declare_parameter('obstacle_min_range_padding', 0.015)
@@ -235,16 +408,24 @@ class AxisAlignedPlannerNode(Node):
         self.declare_parameter('safety_margin', 0.070)
         self.declare_parameter('candidate_spacing', 0.02)
         self.declare_parameter('lane_selection_buffer', 0.05)
+        self.declare_parameter('robot_footprint_length', 0.210)
+        self.declare_parameter('robot_footprint_width', 0.178)
 
         scan_topic = self.get_parameter('scan_topic').value
         odom_topic = self.get_parameter('odom_topic').value
         plan_topic = self.get_parameter('plan_topic').value
+        parking_target_topic = self.get_parameter(
+            'parking_target_topic'
+        ).value
         path_topic = self.get_parameter('path_topic').value
         marker_topic = self.get_parameter('marker_topic').value
         self.frame_id = self.get_parameter('frame_id').value
         planning_rate_hz = self.get_parameter('planning_rate_hz').value
         self.scan_timeout = self.get_parameter('scan_timeout').value
         self.odom_timeout = self.get_parameter('odom_timeout').value
+        self.parking_target_timeout = self.get_parameter(
+            'parking_target_timeout'
+        ).value
         self.minimum_scan_points = self.get_parameter(
             'minimum_scan_points'
         ).value
@@ -275,6 +456,12 @@ class AxisAlignedPlannerNode(Node):
             robot_radius=self.get_parameter('robot_radius').value,
             safety_margin=self.get_parameter('safety_margin').value,
             candidate_spacing=self.get_parameter('candidate_spacing').value,
+            robot_footprint_length=self.get_parameter(
+                'robot_footprint_length'
+            ).value,
+            robot_footprint_width=self.get_parameter(
+                'robot_footprint_width'
+            ).value,
         )
         self.lane_selection_buffer = self.get_parameter(
             'lane_selection_buffer'
@@ -284,6 +471,7 @@ class AxisAlignedPlannerNode(Node):
             scan_topic,
             odom_topic,
             plan_topic,
+            parking_target_topic,
             path_topic,
             marker_topic,
             planning_rate_hz,
@@ -299,6 +487,8 @@ class AxisAlignedPlannerNode(Node):
         self.scan_valid_ray_count = 0
         self.scan_total_ray_count = 0
         self.obstacle_points = []
+        self.parking_target = None
+        self.parking_target_received_at = None
         self.committed_lane_y = None
         self.last_plan_status = None
 
@@ -321,6 +511,12 @@ class AxisAlignedPlannerNode(Node):
             self.odom_callback,
             qos_profile_sensor_data,
         )
+        self.create_subscription(
+            String,
+            parking_target_topic,
+            self.parking_target_callback,
+            10,
+        )
         self.create_timer(
             1.0 / planning_rate_hz,
             self.planning_timer_callback,
@@ -336,6 +532,7 @@ class AxisAlignedPlannerNode(Node):
         scan_topic,
         odom_topic,
         plan_topic,
+        parking_target_topic,
         path_topic,
         marker_topic,
         planning_rate_hz,
@@ -344,6 +541,7 @@ class AxisAlignedPlannerNode(Node):
             scan_topic,
             odom_topic,
             plan_topic,
+            parking_target_topic,
             path_topic,
             marker_topic,
         )
@@ -353,6 +551,7 @@ class AxisAlignedPlannerNode(Node):
             planning_rate_hz,
             self.scan_timeout,
             self.odom_timeout,
+            self.parking_target_timeout,
             self.minimum_scan_points,
             self.obstacle_min_range_padding,
             self.self_filter_padding,
@@ -360,6 +559,8 @@ class AxisAlignedPlannerNode(Node):
             self.geometry.robot_radius,
             self.geometry.safety_margin,
             self.geometry.candidate_spacing,
+            self.geometry.robot_footprint_length,
+            self.geometry.robot_footprint_width,
             self.lane_selection_buffer,
         )
         if any(value <= 0 for value in positive_values):
@@ -494,6 +695,15 @@ class AxisAlignedPlannerNode(Node):
             and valid_fraction >= self.minimum_scan_valid_fraction
         )
 
+    def parking_target_callback(self, message):
+        self.parking_target_received_at = time.monotonic()
+        try:
+            result = json.loads(message.data)
+            self.parking_target = parse_parking_target(result, self.frame_id)
+        except (json.JSONDecodeError, TypeError, ValueError) as error:
+            self.parking_target = None
+            self.get_logger().error(f'Invalid parking target: {error}')
+
     def planning_timer_callback(self):
         now = time.monotonic()
         result = self.evaluate_plan(now)
@@ -532,10 +742,17 @@ class AxisAlignedPlannerNode(Node):
             return self.invalid_plan('scan_timeout')
         if not self.scan_valid:
             return self.invalid_plan('scan_invalid')
+        if self.parking_target_received_at is None:
+            return self.invalid_plan('waiting_for_parking_target')
+        if now - self.parking_target_received_at > self.parking_target_timeout:
+            return self.invalid_plan('parking_target_timeout')
+        if self.parking_target is None:
+            return self.invalid_plan('parking_target_invalid')
 
         result = plan_axis_aligned_path(
             self.obstacle_points,
             self.geometry,
+            self.parking_target,
             committed_y=self.committed_lane_y,
             lane_selection_buffer=self.lane_selection_buffer,
         )
@@ -727,9 +944,31 @@ class AxisAlignedPlannerNode(Node):
             ]
             markers.append(blocked_lane)
 
+        parking_goal = result['waypoints'][-1]
+        parking_space = self.new_marker(
+            stamp,
+            'parking_space',
+            22,
+            Marker.CUBE,
+        )
+        parking_space.pose.position.x = parking_goal['x']
+        parking_space.pose.position.y = parking_goal['y']
+        parking_space.pose.position.z = 0.012
+        half_yaw = parking_goal['final_yaw'] / 2.0
+        parking_space.pose.orientation.z = math.sin(half_yaw)
+        parking_space.pose.orientation.w = math.cos(half_yaw)
+        parking_space.scale.x = parking_goal['parking_length']
+        parking_space.scale.y = parking_goal['parking_width']
+        parking_space.scale.z = 0.015
+        self.set_color(parking_space, 1.0, 0.2, 0.7, 0.16)
+        markers.append(parking_space)
+
         waypoint_colors = {
             'lane_entry': (0.1, 0.65, 1.0),
             'cp2': (0.1, 0.9, 0.25),
+            'parking_transition': (0.2, 0.7, 1.0),
+            'parking_approach': (0.7, 0.3, 1.0),
+            'parking_goal': (1.0, 0.2, 0.7),
         }
         for index, waypoint in enumerate(result['waypoints'], start=30):
             role = waypoint['role']
@@ -835,8 +1074,12 @@ class AxisAlignedPlannerNode(Node):
         point_count = 48
         marker.points = [
             self.make_point(
-                float(x_position) + radius * math.cos(2.0 * math.pi * index / point_count),
-                float(y_position) + radius * math.sin(2.0 * math.pi * index / point_count),
+                float(x_position) + radius * math.cos(
+                    2.0 * math.pi * index / point_count
+                ),
+                float(y_position) + radius * math.sin(
+                    2.0 * math.pi * index / point_count
+                ),
                 0.055,
             )
             for index in range(point_count + 1)
