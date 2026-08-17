@@ -11,25 +11,23 @@ from robot_perception.safety_status import safety_status_fault_reason
 
 
 class SafetyArbiterLogic:
-    def __init__(self, desired_timeout, safety_timeout):
+    def __init__(
+        self,
+        desired_timeout,
+        safety_timeout,
+        startup_confirmation_duration,
+    ):
         self.desired_timeout = desired_timeout
         self.safety_timeout = safety_timeout
+        self.startup_confirmation_duration = startup_confirmation_duration
         self.armed = False
-        self.zero_command_seen = False
+        self.startup_zero_seen = False
+        self.startup_ready_since = None
         self.fault_reason = None
 
     def latch_fault(self, reason):
         if self.fault_reason is None:
             self.fault_reason = reason
-
-    def record_desired_velocity(self, desired_velocity, desired_valid):
-        if (
-            desired_valid
-            and desired_velocity is not None
-            and abs(desired_velocity[0]) <= 1e-9
-            and abs(desired_velocity[1]) <= 1e-9
-        ):
-            self.zero_command_seen = True
 
     def evaluate(
         self,
@@ -46,8 +44,11 @@ class SafetyArbiterLogic:
         if self.fault_reason is not None:
             return 'LATCHED', self.fault_reason, 0.0, 0.0
         if desired_received_at is None:
+            self.startup_zero_seen = False
+            self.startup_ready_since = None
             return 'WAITING', 'waiting_for_desired_velocity', 0.0, 0.0
         if safety_received_at is None or safety is None:
+            self.startup_ready_since = None
             return 'WAITING', 'waiting_for_safety', 0.0, 0.0
 
         desired_stale = now - desired_received_at > self.desired_timeout
@@ -56,31 +57,47 @@ class SafetyArbiterLogic:
             if self.armed:
                 self.latch_fault('desired_velocity_timeout')
                 return 'LATCHED', self.fault_reason, 0.0, 0.0
+            self.startup_zero_seen = False
+            self.startup_ready_since = None
             return 'WAITING', 'desired_velocity_timeout', 0.0, 0.0
         if safety_stale:
             if self.armed:
                 self.latch_fault('safety_timeout')
                 return 'LATCHED', self.fault_reason, 0.0, 0.0
+            self.startup_ready_since = None
             return 'WAITING', 'safety_timeout', 0.0, 0.0
         safety_fault = safety_status_fault_reason(safety)
         if safety_fault is not None:
             if self.armed:
                 self.latch_fault(safety_fault)
                 return 'LATCHED', self.fault_reason, 0.0, 0.0
+            self.startup_ready_since = None
             return 'BLOCKED', safety_fault, 0.0, 0.0
         if not desired_valid or desired_velocity is None:
             if self.armed:
                 self.latch_fault('desired_velocity_invalid')
                 return 'LATCHED', self.fault_reason, 0.0, 0.0
+            self.startup_zero_seen = False
+            self.startup_ready_since = None
             return 'BLOCKED', 'desired_velocity_invalid', 0.0, 0.0
 
-        if not self.zero_command_seen:
-            if (
-                abs(desired_velocity[0]) > 1e-9
-                or abs(desired_velocity[1]) > 1e-9
-            ):
+        if not self.armed:
+            command_is_zero = (
+                abs(desired_velocity[0]) <= 1e-9
+                and abs(desired_velocity[1]) <= 1e-9
+            )
+            if command_is_zero:
+                self.startup_zero_seen = True
+            if not self.startup_zero_seen:
+                self.startup_ready_since = None
                 return 'BLOCKED', 'waiting_for_zero_command', 0.0, 0.0
-            self.zero_command_seen = True
+            if self.startup_ready_since is None:
+                self.startup_ready_since = now
+            if (
+                now - self.startup_ready_since
+                < self.startup_confirmation_duration
+            ):
+                return 'WAITING', 'confirming_safe_startup', 0.0, 0.0
 
         self.armed = True
         return (
@@ -109,6 +126,7 @@ class SafetyArbiterNode(Node):
         self.declare_parameter('control_rate_hz', 20.0)
         self.declare_parameter('desired_timeout', 0.25)
         self.declare_parameter('safety_timeout', 0.6)
+        self.declare_parameter('startup_confirmation_duration', 0.5)
         self.declare_parameter('maximum_linear_speed', 0.06)
         self.declare_parameter('maximum_angular_speed', 0.30)
 
@@ -120,6 +138,9 @@ class SafetyArbiterNode(Node):
         control_rate_hz = self.get_parameter('control_rate_hz').value
         desired_timeout = self.get_parameter('desired_timeout').value
         safety_timeout = self.get_parameter('safety_timeout').value
+        startup_confirmation_duration = self.get_parameter(
+            'startup_confirmation_duration'
+        ).value
         self.maximum_linear_speed = self.get_parameter(
             'maximum_linear_speed'
         ).value
@@ -137,6 +158,7 @@ class SafetyArbiterNode(Node):
             control_rate_hz,
             desired_timeout,
             safety_timeout,
+            startup_confirmation_duration,
             self.maximum_linear_speed,
             self.maximum_angular_speed,
         )
@@ -145,7 +167,11 @@ class SafetyArbiterNode(Node):
         if any(value <= 0.0 for value in positive_values):
             raise ValueError('rates, timeouts, and speed limits must be positive')
 
-        self.logic = SafetyArbiterLogic(desired_timeout, safety_timeout)
+        self.logic = SafetyArbiterLogic(
+            desired_timeout,
+            safety_timeout,
+            startup_confirmation_duration,
+        )
         self.desired_velocity = None
         self.desired_valid = False
         self.desired_received_at = None
@@ -215,10 +241,6 @@ class SafetyArbiterNode(Node):
         )
         self.desired_valid = components_valid
         self.desired_received_at = time.monotonic()
-        self.logic.record_desired_velocity(
-            self.desired_velocity,
-            self.desired_valid,
-        )
 
     def safety_callback(self, message):
         try:

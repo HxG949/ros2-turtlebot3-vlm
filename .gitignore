@@ -8,3 +8,4 @@ log/
 __pycache__/
 handoff/
 local_knowledge/
+artifacts/

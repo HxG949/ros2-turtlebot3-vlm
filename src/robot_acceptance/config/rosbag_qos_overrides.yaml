@@ -1,0 +1,34 @@
+/scan: &sensor
+  history: keep_last
+  depth: 10
+  reliability: best_effort
+  durability: volatile
+/odom: *sensor
+/gazebo/model_states: *sensor
+/gazebo/contacts/base: *sensor
+/gazebo/contacts/lidar: *sensor
+/gazebo/contacts/wheel_left: *sensor
+/gazebo/contacts/wheel_right: *sensor
+/gazebo/contacts/caster: *sensor
+/clock: *sensor
+/parking/candidates: &status
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/parking/selected_target: *status
+/navigation/plan: *status
+/navigation/control_status: *status
+/navigation/desired_cmd_vel: *status
+/navigation/safety_arbiter_status: *status
+/navigation/cmd_vel_watchdog_status: *status
+/safety/status: *status
+/cmd_vel: *status
+/acceptance/collision_status: *status
+/acceptance/collision_events: *status
+/tf: *status
+/tf_static:
+  history: keep_last
+  depth: 1
+  reliability: reliable
+  durability: transient_local

@@ -24,6 +24,7 @@ setup(
         ]),
         ('share/' + package_name + '/launch', [
                 'launch/competition_parking.launch.py',
+                'launch/obstacle_control.launch.py',
                 'launch/obstacle_navigation.launch.py',
                 'launch/obstacle_planning.launch.py',
                 'launch/semantic_navigation.launch.py',

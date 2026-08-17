@@ -8,16 +8,31 @@ from std_msgs.msg import String
 
 
 class HeartbeatWatchdogLogic:
-    def __init__(self, heartbeat_timeout, startup_timeout):
+    def __init__(
+        self,
+        heartbeat_timeout,
+        startup_timeout,
+        startup_confirmation_duration,
+    ):
         self.heartbeat_timeout = heartbeat_timeout
         self.startup_timeout = startup_timeout
+        self.startup_confirmation_duration = startup_confirmation_duration
         self.started_at = None
+        self.first_heartbeat_at = None
         self.last_heartbeat_at = None
+        self.monitoring_confirmed = False
         self.fault_reason = None
 
     def record_heartbeat(self, received_at):
         if self.fault_reason is None:
+            if self.first_heartbeat_at is None:
+                self.first_heartbeat_at = received_at
             self.last_heartbeat_at = received_at
+            if (
+                received_at - self.first_heartbeat_at
+                >= self.startup_confirmation_duration
+            ):
+                self.monitoring_confirmed = True
 
     def record_invalid_status(self):
         if self.last_heartbeat_at is not None and self.fault_reason is None:
@@ -28,10 +43,12 @@ class HeartbeatWatchdogLogic:
             self.started_at = now
         if self.fault_reason is not None:
             return True, self.fault_reason
-        if self.last_heartbeat_at is None:
+        if not self.monitoring_confirmed:
             if now - self.started_at > self.startup_timeout:
                 self.fault_reason = 'arbiter_startup_timeout'
                 return True, self.fault_reason
+            if self.last_heartbeat_at is not None:
+                return False, 'confirming_arbiter_heartbeat'
             return False, 'waiting_for_arbiter_heartbeat'
         if now - self.last_heartbeat_at > self.heartbeat_timeout:
             self.fault_reason = 'arbiter_heartbeat_timeout'
@@ -55,6 +72,7 @@ class CmdVelWatchdogNode(Node):
         self.declare_parameter('check_rate_hz', 20.0)
         self.declare_parameter('heartbeat_timeout', 0.25)
         self.declare_parameter('startup_timeout', 2.0)
+        self.declare_parameter('startup_confirmation_duration', 0.5)
 
         arbiter_status_topic = self.get_parameter(
             'arbiter_status_topic'
@@ -64,6 +82,9 @@ class CmdVelWatchdogNode(Node):
         check_rate_hz = self.get_parameter('check_rate_hz').value
         heartbeat_timeout = self.get_parameter('heartbeat_timeout').value
         startup_timeout = self.get_parameter('startup_timeout').value
+        startup_confirmation_duration = self.get_parameter(
+            'startup_confirmation_duration'
+        ).value
 
         topics = (
             arbiter_status_topic,
@@ -76,12 +97,15 @@ class CmdVelWatchdogNode(Node):
             check_rate_hz <= 0.0
             or heartbeat_timeout <= 0.0
             or startup_timeout <= 0.0
+            or startup_confirmation_duration <= 0.0
+            or startup_confirmation_duration >= startup_timeout
         ):
             raise ValueError('rate and watchdog timeouts must be positive')
 
         self.logic = HeartbeatWatchdogLogic(
             heartbeat_timeout,
             startup_timeout,
+            startup_confirmation_duration,
         )
         self.emergency_publisher = None
         self.last_status = None

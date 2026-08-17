@@ -1,0 +1,573 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/HxG949/ros2-turtlebot3-vlm/docs/schemas/p0_result.schema.json",
+  "title": "P0 parking acceptance result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run",
+    "outcome",
+    "thresholds",
+    "target",
+    "mission",
+    "metrics",
+    "evidence",
+    "failures"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "run": {
+      "$ref": "#/$defs/run"
+    },
+    "outcome": {
+      "$ref": "#/$defs/outcome"
+    },
+    "thresholds": {
+      "$ref": "#/$defs/thresholds"
+    },
+    "target": {
+      "$ref": "#/$defs/target"
+    },
+    "mission": {
+      "$ref": "#/$defs/mission"
+    },
+    "metrics": {
+      "$ref": "#/$defs/metrics"
+    },
+    "evidence": {
+      "$ref": "#/$defs/evidence"
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/failure"
+      }
+    }
+  },
+  "$defs": {
+    "finiteNumber": {
+      "type": "number"
+    },
+    "nonNegativeNumber": {
+      "type": "number",
+      "minimum": 0
+    },
+    "nullableNumber": {
+      "type": ["number", "null"]
+    },
+    "nullableNonNegativeNumber": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "code": {
+      "enum": [
+        "PASS",
+        "CONFIG_INVALID",
+        "PREFLIGHT_FAILED",
+        "LAUNCH_FAILED",
+        "PROCESS_EXITED",
+        "READINESS_TIMEOUT",
+        "TELEMETRY_INVALID",
+        "EVIDENCE_INCOMPLETE",
+        "REPORT_FAILED",
+        "UNEXPECTED_SHUTDOWN",
+        "FRAME_ALIGNMENT_INVALID",
+        "MISSION_TIMEOUT",
+        "CONTROLLER_FAULT",
+        "SAFETY_CHAIN_FAULT",
+        "COLLISION_DETECTED",
+        "WRONG_TERMINAL_STATE",
+        "FINAL_POSITION_FAILED",
+        "FINAL_YAW_FAILED",
+        "PARKING_ENVELOPE_FAILED",
+        "NOT_STATIONARY",
+        "POST_COMPLETE_MOTION",
+        "CP2_VALIDATION_FAILED",
+        "PLAN_CHANGED",
+        "COLLISION_EVIDENCE_MISSING"
+      ]
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "started_at_utc",
+        "ended_at_utc",
+        "git_commit",
+        "git_dirty",
+        "layout_seed",
+        "parking_space_id",
+        "enable_motion",
+        "stop_at_cp1",
+        "headless"
+      ],
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "started_at_utc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ended_at_utc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "git_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "git_dirty": {
+          "type": "boolean"
+        },
+        "layout_seed": {
+          "type": "integer"
+        },
+        "parking_space_id": {
+          "const": "space_2"
+        },
+        "enable_motion": {
+          "type": "boolean"
+        },
+        "stop_at_cp1": {
+          "type": "boolean"
+        },
+        "headless": {
+          "type": "boolean"
+        }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict", "primary_code", "exit_code", "summary"],
+      "properties": {
+        "verdict": {
+          "enum": ["PASS", "FAIL", "ERROR"]
+        },
+        "primary_code": {
+          "$ref": "#/$defs/code"
+        },
+        "exit_code": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 32
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "readiness_timeout_s",
+        "motion_start_timeout_s",
+        "mission_timeout_s",
+        "monitor_grace_s",
+        "post_complete_hold_s",
+        "position_tolerance_m",
+        "final_yaw_tolerance_rad",
+        "stopped_linear_speed_mps",
+        "stopped_angular_speed_radps",
+        "command_zero_tolerance",
+        "post_complete_position_drift_m",
+        "post_complete_yaw_drift_rad",
+        "frame_alignment_position_tolerance_m",
+        "frame_alignment_yaw_tolerance_rad",
+        "frame_alignment_sync_tolerance_s",
+        "cp2_position_tolerance_m",
+        "cp2_cross_track_tolerance_m",
+        "cp2_heading_tolerance_rad",
+        "cp2_angular_speed_radps",
+        "envelope_epsilon_m",
+        "robot_footprint_length_m",
+        "robot_footprint_width_m"
+      ],
+      "properties": {
+        "readiness_timeout_s": {"const": 30.0},
+        "motion_start_timeout_s": {"const": 10.0},
+        "mission_timeout_s": {"const": 120.0},
+        "monitor_grace_s": {"const": 5.0},
+        "post_complete_hold_s": {"const": 1.0},
+        "position_tolerance_m": {"const": 0.015},
+        "final_yaw_tolerance_rad": {"const": 0.05},
+        "stopped_linear_speed_mps": {"const": 0.005},
+        "stopped_angular_speed_radps": {"const": 0.02},
+        "command_zero_tolerance": {"const": 0.0001},
+        "post_complete_position_drift_m": {"const": 0.005},
+        "post_complete_yaw_drift_rad": {"const": 0.01},
+        "frame_alignment_position_tolerance_m": {"const": 0.01},
+        "frame_alignment_yaw_tolerance_rad": {"const": 0.02},
+        "frame_alignment_sync_tolerance_s": {"const": 0.1},
+        "cp2_position_tolerance_m": {"const": 0.015},
+        "cp2_cross_track_tolerance_m": {"const": 0.03},
+        "cp2_heading_tolerance_rad": {"const": 0.02},
+        "cp2_angular_speed_radps": {"const": 0.02},
+        "envelope_epsilon_m": {"const": 1e-9},
+        "robot_footprint_length_m": {"const": 0.21},
+        "robot_footprint_width_m": {"const": 0.178}
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frame_id",
+        "parking_space_id",
+        "center_x_m",
+        "center_y_m",
+        "entry_yaw_rad",
+        "final_yaw_rad",
+        "length_m",
+        "width_m",
+        "approach_distance_m"
+      ],
+      "properties": {
+        "frame_id": {"const": "odom"},
+        "parking_space_id": {"const": "space_2"},
+        "center_x_m": {"const": 0.8015},
+        "center_y_m": {"const": 0.0},
+        "entry_yaw_rad": {"const": 0.0},
+        "final_yaw_rad": {"const": 3.141592653589793},
+        "length_m": {"const": 0.297},
+        "width_m": {"const": 0.21},
+        "approach_distance_m": {"const": 0.4}
+      }
+    },
+    "mission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ready",
+        "motion_started",
+        "first_nonzero_cmd_time_s",
+        "plan_stable",
+        "plan_sha256",
+        "cp2_validated",
+        "follower",
+        "arbiter",
+        "watchdog",
+        "safety",
+        "collision"
+      ],
+      "properties": {
+        "ready": {"type": "boolean"},
+        "motion_started": {"type": "boolean"},
+        "first_nonzero_cmd_time_s": {
+          "$ref": "#/$defs/nullableNonNegativeNumber"
+        },
+        "plan_stable": {"type": "boolean"},
+        "plan_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "cp2_validated": {"type": "boolean"},
+        "follower": {
+          "$ref": "#/$defs/follower"
+        },
+        "arbiter": {
+          "$ref": "#/$defs/arbiter"
+        },
+        "watchdog": {
+          "$ref": "#/$defs/watchdog"
+        },
+        "safety": {
+          "$ref": "#/$defs/safety"
+        },
+        "collision": {
+          "$ref": "#/$defs/collision"
+        }
+      }
+    },
+    "follower": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "reason", "target_role", "fault_seen"],
+      "properties": {
+        "state": {"type": ["string", "null"], "minLength": 1},
+        "reason": {"type": ["string", "null"], "minLength": 1},
+        "target_role": {"type": ["string", "null"]},
+        "fault_seen": {"type": "boolean"}
+      }
+    },
+    "arbiter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "reason",
+        "armed",
+        "latched",
+        "cmd_vel_publisher_count"
+      ],
+      "properties": {
+        "state": {"type": ["string", "null"], "minLength": 1},
+        "reason": {"type": ["string", "null"], "minLength": 1},
+        "armed": {"type": "boolean"},
+        "latched": {"type": "boolean"},
+        "cmd_vel_publisher_count": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        }
+      }
+    },
+    "watchdog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["emergency_active", "reason", "publishing_cmd_vel"],
+      "properties": {
+        "emergency_active": {"type": "boolean"},
+        "reason": {"type": ["string", "null"], "minLength": 1},
+        "publishing_cmd_vel": {"type": "boolean"}
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["valid", "emergency_stop", "fault_seen"],
+      "properties": {
+        "valid": {"type": "boolean"},
+        "emergency_stop": {"type": "boolean"},
+        "fault_seen": {"type": "boolean"}
+      }
+    },
+    "collision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["valid", "all_sensors_fresh", "event_seen"],
+      "properties": {
+        "valid": {"type": "boolean"},
+        "all_sensors_fresh": {"type": "boolean"},
+        "event_seen": {"type": "boolean"}
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "readiness_duration_s",
+        "mission_duration_s",
+        "post_complete_hold_s",
+        "selected_y_m",
+        "minimum_planned_clearance_m",
+        "frame_alignment",
+        "final_odom",
+        "final_ground_truth",
+        "odom_ground_truth_position_delta_m",
+        "odom_ground_truth_yaw_delta_rad",
+        "cp2",
+        "stationary",
+        "collision_count"
+      ],
+      "properties": {
+        "readiness_duration_s": {"$ref": "#/$defs/nonNegativeNumber"},
+        "mission_duration_s": {
+          "$ref": "#/$defs/nullableNonNegativeNumber"
+        },
+        "post_complete_hold_s": {"$ref": "#/$defs/nonNegativeNumber"},
+        "selected_y_m": {"$ref": "#/$defs/nullableNumber"},
+        "minimum_planned_clearance_m": {
+          "$ref": "#/$defs/nullableNonNegativeNumber"
+        },
+        "frame_alignment": {"$ref": "#/$defs/frameAlignment"},
+        "final_odom": {
+          "anyOf": [
+            {"$ref": "#/$defs/finalPose"},
+            {"type": "null"}
+          ]
+        },
+        "final_ground_truth": {
+          "anyOf": [
+            {"$ref": "#/$defs/finalPose"},
+            {"type": "null"}
+          ]
+        },
+        "odom_ground_truth_position_delta_m": {
+          "$ref": "#/$defs/nullableNonNegativeNumber"
+        },
+        "odom_ground_truth_yaw_delta_rad": {
+          "$ref": "#/$defs/nullableNonNegativeNumber"
+        },
+        "cp2": {"$ref": "#/$defs/cp2Metrics"},
+        "stationary": {"$ref": "#/$defs/stationaryMetrics"},
+        "collision_count": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "frameAlignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validated",
+        "odom_to_world_x_m",
+        "odom_to_world_y_m",
+        "odom_to_world_yaw_rad",
+        "position_residual_m",
+        "yaw_residual_rad",
+        "sample_time_delta_s"
+      ],
+      "properties": {
+        "validated": {"type": "boolean"},
+        "odom_to_world_x_m": {"$ref": "#/$defs/nullableNumber"},
+        "odom_to_world_y_m": {"$ref": "#/$defs/nullableNumber"},
+        "odom_to_world_yaw_rad": {"$ref": "#/$defs/nullableNumber"},
+        "position_residual_m": {
+          "$ref": "#/$defs/nullableNonNegativeNumber"
+        },
+        "yaw_residual_rad": {
+          "$ref": "#/$defs/nullableNonNegativeNumber"
+        },
+        "sample_time_delta_s": {
+          "$ref": "#/$defs/nullableNonNegativeNumber"
+        }
+      }
+    },
+    "finalPose": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x_m",
+        "y_m",
+        "yaw_rad",
+        "position_error_m",
+        "yaw_error_rad",
+        "margins_m"
+      ],
+      "properties": {
+        "x_m": {"$ref": "#/$defs/finiteNumber"},
+        "y_m": {"$ref": "#/$defs/finiteNumber"},
+        "yaw_rad": {"$ref": "#/$defs/finiteNumber"},
+        "position_error_m": {"$ref": "#/$defs/nonNegativeNumber"},
+        "yaw_error_rad": {"$ref": "#/$defs/nonNegativeNumber"},
+        "margins_m": {"$ref": "#/$defs/margins"}
+      }
+    },
+    "margins": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["front", "rear", "left", "right", "minimum"],
+      "properties": {
+        "front": {"$ref": "#/$defs/finiteNumber"},
+        "rear": {"$ref": "#/$defs/finiteNumber"},
+        "left": {"$ref": "#/$defs/finiteNumber"},
+        "right": {"$ref": "#/$defs/finiteNumber"},
+        "minimum": {"$ref": "#/$defs/finiteNumber"}
+      }
+    },
+    "cp2Metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validated",
+        "crossing_time_s",
+        "longitudinal_error_m",
+        "cross_track_error_m",
+        "heading_error_rad",
+        "angular_speed_radps"
+      ],
+      "properties": {
+        "validated": {"type": "boolean"},
+        "crossing_time_s": {"type": ["number", "null"], "minimum": 0},
+        "longitudinal_error_m": {"type": ["number", "null"]},
+        "cross_track_error_m": {"type": ["number", "null"], "minimum": 0},
+        "heading_error_rad": {"type": ["number", "null"], "minimum": 0},
+        "angular_speed_radps": {"type": ["number", "null"], "minimum": 0}
+      }
+    },
+    "stationaryMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validated",
+        "maximum_linear_speed_mps",
+        "maximum_angular_speed_radps",
+        "maximum_desired_command",
+        "maximum_output_command",
+        "position_drift_m",
+        "yaw_drift_rad"
+      ],
+      "properties": {
+        "validated": {"type": "boolean"},
+        "maximum_linear_speed_mps": {
+          "$ref": "#/$defs/nullableNonNegativeNumber"
+        },
+        "maximum_angular_speed_radps": {
+          "$ref": "#/$defs/nullableNonNegativeNumber"
+        },
+        "maximum_desired_command": {
+          "$ref": "#/$defs/nullableNonNegativeNumber"
+        },
+        "maximum_output_command": {
+          "$ref": "#/$defs/nullableNonNegativeNumber"
+        },
+        "position_drift_m": {
+          "$ref": "#/$defs/nullableNonNegativeNumber"
+        },
+        "yaw_drift_rad": {
+          "$ref": "#/$defs/nullableNonNegativeNumber"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_directory",
+        "bag_path",
+        "bag_complete",
+        "required_topics",
+        "topic_message_counts",
+        "missing_topics",
+        "events_path",
+        "report_path",
+        "junit_path",
+        "logs_path",
+        "video_path"
+      ],
+      "properties": {
+        "artifact_directory": {"type": "string", "minLength": 1},
+        "bag_path": {"type": ["string", "null"], "minLength": 1},
+        "bag_complete": {"type": "boolean"},
+        "required_topics": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "topic_message_counts": {
+          "type": "object",
+          "propertyNames": {"pattern": "^/"},
+          "additionalProperties": {"type": "integer", "minimum": 0}
+        },
+        "missing_topics": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "events_path": {"type": ["string", "null"], "minLength": 1},
+        "report_path": {"type": ["string", "null"], "minLength": 1},
+        "junit_path": {"type": ["string", "null"], "minLength": 1},
+        "logs_path": {"type": ["string", "null"], "minLength": 1},
+        "video_path": {"type": ["string", "null"]}
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "source", "reason", "observed_at_s", "details"],
+      "properties": {
+        "code": {"$ref": "#/$defs/code"},
+        "source": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1},
+        "observed_at_s": {"$ref": "#/$defs/nonNegativeNumber"},
+        "details": {"type": "object"}
+      }
+    }
+  }
+}

@@ -2,6 +2,7 @@ axis_aligned_follower_node:
   ros__parameters:
     plan_topic: /navigation/plan
     safety_topic: /safety/status
+    arbiter_status_topic: /navigation/safety_arbiter_status
     odom_topic: /odom
     desired_cmd_vel_topic: /navigation/desired_cmd_vel
     status_topic: /navigation/control_status
@@ -10,6 +11,10 @@ axis_aligned_follower_node:
     control_rate_hz: 20.0
     plan_timeout: 0.6
     safety_timeout: 0.6
+    arbiter_status_timeout: 0.6
+    required_desired_subscriber_count: 1
+    required_status_subscriber_count: 0
+    subscriber_confirmation_duration: 0.0
     odom_timeout: 0.5
     mission_timeout: 120.0
     plan_stable_duration: 0.6

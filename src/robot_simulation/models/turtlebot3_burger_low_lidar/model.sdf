@@ -35,6 +35,18 @@
           <diffuse>0.3 0.3 0.3 1</diffuse>
         </material>
       </visual>
+      <sensor name="base_contact_sensor" type="contact">
+        <always_on>true</always_on>
+        <update_rate>100</update_rate>
+        <contact><collision>base_collision</collision></contact>
+        <plugin name="base_contact_ros" filename="libgazebo_ros_bumper.so">
+          <ros>
+            <namespace>/gazebo/contacts</namespace>
+            <remapping>bumper_states:=base</remapping>
+          </ros>
+          <frame_name>world</frame_name>
+        </plugin>
+      </sensor>
     </link>
 
     <link name="imu_link">
@@ -106,6 +118,18 @@
           <frame_name>base_scan</frame_name>
         </plugin>
       </sensor>
+      <sensor name="lidar_contact_sensor" type="contact">
+        <always_on>true</always_on>
+        <update_rate>100</update_rate>
+        <contact><collision>lidar_sensor_collision</collision></contact>
+        <plugin name="lidar_contact_ros" filename="libgazebo_ros_bumper.so">
+          <ros>
+            <namespace>/gazebo/contacts</namespace>
+            <remapping>bumper_states:=lidar</remapping>
+          </ros>
+          <frame_name>world</frame_name>
+        </plugin>
+      </sensor>
     </link>
 
     <link name="wheel_left_link">
@@ -135,6 +159,18 @@
         </geometry>
         <material><ambient>0.2 0.2 0.2 1</ambient><diffuse>0.2 0.2 0.2 1</diffuse></material>
       </visual>
+      <sensor name="wheel_left_contact_sensor" type="contact">
+        <always_on>true</always_on>
+        <update_rate>100</update_rate>
+        <contact><collision>wheel_left_collision</collision></contact>
+        <plugin name="wheel_left_contact_ros" filename="libgazebo_ros_bumper.so">
+          <ros>
+            <namespace>/gazebo/contacts</namespace>
+            <remapping>bumper_states:=wheel_left</remapping>
+          </ros>
+          <frame_name>world</frame_name>
+        </plugin>
+      </sensor>
     </link>
 
     <link name="wheel_right_link">
@@ -164,6 +200,18 @@
         </geometry>
         <material><ambient>0.2 0.2 0.2 1</ambient><diffuse>0.2 0.2 0.2 1</diffuse></material>
       </visual>
+      <sensor name="wheel_right_contact_sensor" type="contact">
+        <always_on>true</always_on>
+        <update_rate>100</update_rate>
+        <contact><collision>wheel_right_collision</collision></contact>
+        <plugin name="wheel_right_contact_ros" filename="libgazebo_ros_bumper.so">
+          <ros>
+            <namespace>/gazebo/contacts</namespace>
+            <remapping>bumper_states:=wheel_right</remapping>
+          </ros>
+          <frame_name>world</frame_name>
+        </plugin>
+      </sensor>
     </link>
 
     <link name="caster_back_link">
@@ -179,6 +227,18 @@
         <geometry><sphere><radius>0.005</radius></sphere></geometry>
         <surface><contact><ode><kp>1e5</kp><kd>1</kd><max_vel>0.01</max_vel><min_depth>0.001</min_depth></ode></contact></surface>
       </collision>
+      <sensor name="caster_contact_sensor" type="contact">
+        <always_on>true</always_on>
+        <update_rate>100</update_rate>
+        <contact><collision>caster_collision</collision></contact>
+        <plugin name="caster_contact_ros" filename="libgazebo_ros_bumper.so">
+          <ros>
+            <namespace>/gazebo/contacts</namespace>
+            <remapping>bumper_states:=caster</remapping>
+          </ros>
+          <frame_name>world</frame_name>
+        </plugin>
+      </sensor>
     </link>
 
     <joint name="base_joint" type="fixed">

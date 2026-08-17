@@ -251,12 +251,38 @@ def plan_is_stable(now, stable_since, stable_duration):
     )
 
 
+def arbiter_status_is_active(value):
+    return (
+        isinstance(value, dict)
+        and value.get('enabled') is True
+        and value.get('armed') is True
+        and value.get('latched') is False
+        and value.get('state') == 'ACTIVE'
+    )
+
+
+def evidence_subscribers_are_ready(
+    desired_count,
+    status_count,
+    required_desired_count,
+    required_status_count,
+):
+    return (
+        desired_count >= required_desired_count
+        and status_count >= required_status_count
+    )
+
+
 class AxisAlignedFollowerNode(Node):
     def __init__(self):
         super().__init__('axis_aligned_follower_node')
 
         self.declare_parameter('plan_topic', '/navigation/plan')
         self.declare_parameter('safety_topic', '/safety/status')
+        self.declare_parameter(
+            'arbiter_status_topic',
+            '/navigation/safety_arbiter_status',
+        )
         self.declare_parameter('odom_topic', '/odom')
         self.declare_parameter(
             'desired_cmd_vel_topic',
@@ -271,6 +297,13 @@ class AxisAlignedFollowerNode(Node):
         self.declare_parameter('control_rate_hz', 20.0)
         self.declare_parameter('plan_timeout', 0.6)
         self.declare_parameter('safety_timeout', 0.6)
+        self.declare_parameter('arbiter_status_timeout', 0.6)
+        self.declare_parameter('required_desired_subscriber_count', 1)
+        self.declare_parameter('required_status_subscriber_count', 0)
+        self.declare_parameter(
+            'subscriber_confirmation_duration',
+            0.0,
+        )
         self.declare_parameter('odom_timeout', 0.5)
         self.declare_parameter('mission_timeout', 60.0)
         self.declare_parameter('plan_stable_duration', 0.6)
@@ -299,6 +332,9 @@ class AxisAlignedFollowerNode(Node):
 
         plan_topic = self.get_parameter('plan_topic').value
         safety_topic = self.get_parameter('safety_topic').value
+        arbiter_status_topic = self.get_parameter(
+            'arbiter_status_topic'
+        ).value
         odom_topic = self.get_parameter('odom_topic').value
         desired_cmd_vel_topic = self.get_parameter(
             'desired_cmd_vel_topic'
@@ -309,6 +345,18 @@ class AxisAlignedFollowerNode(Node):
         control_rate_hz = self.get_parameter('control_rate_hz').value
         self.plan_timeout = self.get_parameter('plan_timeout').value
         self.safety_timeout = self.get_parameter('safety_timeout').value
+        self.arbiter_status_timeout = self.get_parameter(
+            'arbiter_status_timeout'
+        ).value
+        self.required_desired_subscriber_count = self.get_parameter(
+            'required_desired_subscriber_count'
+        ).value
+        self.required_status_subscriber_count = self.get_parameter(
+            'required_status_subscriber_count'
+        ).value
+        self.subscriber_confirmation_duration = self.get_parameter(
+            'subscriber_confirmation_duration'
+        ).value
         self.odom_timeout = self.get_parameter('odom_timeout').value
         self.mission_timeout = self.get_parameter('mission_timeout').value
         self.plan_stable_duration = self.get_parameter(
@@ -376,6 +424,7 @@ class AxisAlignedFollowerNode(Node):
         topics = (
             plan_topic,
             safety_topic,
+            arbiter_status_topic,
             odom_topic,
             desired_cmd_vel_topic,
             status_topic,
@@ -388,6 +437,8 @@ class AxisAlignedFollowerNode(Node):
         self.plan_stable_since = None
         self.safety = None
         self.safety_received_at = None
+        self.arbiter_status = None
+        self.arbiter_status_received_at = None
         self.robot_x = None
         self.robot_y = None
         self.robot_yaw = None
@@ -403,8 +454,13 @@ class AxisAlignedFollowerNode(Node):
         self.completion_reason = None
         self.final_alignment_started = False
         self.fault_reason = None
+        self.evidence_subscribers_ready_since = None
         self.last_control_status = None
-        self.parse_error_reported = {'plan': False, 'safety': False}
+        self.parse_error_reported = {
+            'plan': False,
+            'safety': False,
+            'arbiter': False,
+        }
 
         self.velocity_publisher = self.create_publisher(
             Twist,
@@ -421,6 +477,12 @@ class AxisAlignedFollowerNode(Node):
             String,
             safety_topic,
             self.safety_callback,
+            10,
+        )
+        self.create_subscription(
+            String,
+            arbiter_status_topic,
+            self.arbiter_status_callback,
             10,
         )
         self.create_subscription(
@@ -450,6 +512,7 @@ class AxisAlignedFollowerNode(Node):
             control_rate_hz,
             self.plan_timeout,
             self.safety_timeout,
+            self.arbiter_status_timeout,
             self.odom_timeout,
             self.mission_timeout,
             self.plan_stable_duration,
@@ -480,6 +543,12 @@ class AxisAlignedFollowerNode(Node):
             raise ValueError(
                 'controller rates, limits, and tolerances must be positive'
             )
+        if (
+            self.required_desired_subscriber_count < 1
+            or self.required_status_subscriber_count < 0
+            or self.subscriber_confirmation_duration < 0.0
+        ):
+            raise ValueError('subscriber requirements must be non-negative')
         if self.minimum_linear_speed > self.maximum_linear_speed:
             raise ValueError('minimum linear speed exceeds maximum')
         if self.minimum_angular_speed > self.maximum_angular_speed:
@@ -535,6 +604,10 @@ class AxisAlignedFollowerNode(Node):
             'emergency_stop': True,
         }
         self.safety_received_at = time.monotonic()
+
+    def arbiter_status_callback(self, message):
+        self.arbiter_status = self.parse_json(message, 'arbiter')
+        self.arbiter_status_received_at = time.monotonic()
 
     def odom_callback(self, message):
         position = message.pose.pose.position
@@ -617,6 +690,37 @@ class AxisAlignedFollowerNode(Node):
             return 'COMPLETE', self.completion_reason, stop, None, 0.0
         if self.fault_reason is not None:
             return 'FAULT', self.fault_reason, stop, None, None
+        subscribers_ready = evidence_subscribers_are_ready(
+            self.velocity_publisher.get_subscription_count(),
+            self.status_publisher.get_subscription_count(),
+            self.required_desired_subscriber_count,
+            self.required_status_subscriber_count,
+        )
+        if not subscribers_ready:
+            self.evidence_subscribers_ready_since = None
+            if self.mission_started_at is not None:
+                self.fault_reason = 'evidence_subscriber_lost'
+                return 'FAULT', self.fault_reason, stop, None, None
+            return (
+                'WAITING',
+                'waiting_for_evidence_subscribers',
+                stop,
+                None,
+                None,
+            )
+        if self.evidence_subscribers_ready_since is None:
+            self.evidence_subscribers_ready_since = now
+        if (
+            now - self.evidence_subscribers_ready_since
+            < self.subscriber_confirmation_duration
+        ):
+            return (
+                'WAITING',
+                'confirming_evidence_subscribers',
+                stop,
+                None,
+                None,
+            )
         if self.waypoints is None or self.plan_received_at is None:
             return 'WAITING', 'waiting_for_valid_plan', stop, None, None
         if now - self.plan_received_at > self.plan_timeout:
@@ -633,6 +737,22 @@ class AxisAlignedFollowerNode(Node):
             return 'WAITING', 'waiting_for_odom', stop, None, None
         if now - self.odom_received_at > self.odom_timeout:
             return self.stop_or_latch('odom_timeout', stop)
+        if (
+            self.arbiter_status is None
+            or self.arbiter_status_received_at is None
+        ):
+            return 'WAITING', 'waiting_for_arbiter_status', stop, None, None
+        if (
+            now - self.arbiter_status_received_at
+            > self.arbiter_status_timeout
+        ):
+            return self.stop_or_latch('arbiter_status_timeout', stop)
+        if not arbiter_status_is_active(self.arbiter_status):
+            if self.arbiter_status.get('latched') is True:
+                return self.stop_or_latch('safety_arbiter_latched', stop)
+            if self.mission_started_at is not None:
+                return self.stop_or_latch('safety_arbiter_inactive', stop)
+            return 'WAITING', 'waiting_for_arbiter_active', stop, None, None
         if self.mission_started_at is None:
             if not plan_is_stable(
                 now,

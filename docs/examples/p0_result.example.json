@@ -1,0 +1,214 @@
+{
+  "schema_version": "1.0.0",
+  "run": {
+    "run_id": "EXAMPLE-NOT-A-REAL-RUN",
+    "started_at_utc": "2026-08-17T00:00:00Z",
+    "ended_at_utc": "2026-08-17T00:01:30Z",
+    "git_commit": "0000000000000000000000000000000000000000",
+    "git_dirty": false,
+    "layout_seed": 42,
+    "parking_space_id": "space_2",
+    "enable_motion": true,
+    "stop_at_cp1": false,
+    "headless": true
+  },
+  "outcome": {
+    "verdict": "PASS",
+    "primary_code": "PASS",
+    "exit_code": 0,
+    "summary": "Schema example only; this is not a real acceptance result."
+  },
+  "thresholds": {
+    "readiness_timeout_s": 30.0,
+    "motion_start_timeout_s": 10.0,
+    "mission_timeout_s": 120.0,
+    "monitor_grace_s": 5.0,
+    "post_complete_hold_s": 1.0,
+    "position_tolerance_m": 0.015,
+    "final_yaw_tolerance_rad": 0.05,
+    "stopped_linear_speed_mps": 0.005,
+    "stopped_angular_speed_radps": 0.02,
+    "command_zero_tolerance": 0.0001,
+    "post_complete_position_drift_m": 0.005,
+    "post_complete_yaw_drift_rad": 0.01,
+    "frame_alignment_position_tolerance_m": 0.01,
+    "frame_alignment_yaw_tolerance_rad": 0.02,
+    "frame_alignment_sync_tolerance_s": 0.1,
+    "cp2_position_tolerance_m": 0.015,
+    "cp2_cross_track_tolerance_m": 0.03,
+    "cp2_heading_tolerance_rad": 0.02,
+    "cp2_angular_speed_radps": 0.02,
+    "envelope_epsilon_m": 1e-9,
+    "robot_footprint_length_m": 0.21,
+    "robot_footprint_width_m": 0.178
+  },
+  "target": {
+    "frame_id": "odom",
+    "parking_space_id": "space_2",
+    "center_x_m": 0.8015,
+    "center_y_m": 0.0,
+    "entry_yaw_rad": 0.0,
+    "final_yaw_rad": 3.141592653589793,
+    "length_m": 0.297,
+    "width_m": 0.21,
+    "approach_distance_m": 0.4
+  },
+  "mission": {
+    "ready": true,
+    "motion_started": true,
+    "first_nonzero_cmd_time_s": 5.0,
+    "plan_stable": true,
+    "plan_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "cp2_validated": true,
+    "follower": {
+      "state": "COMPLETE",
+      "reason": "parking_complete",
+      "target_role": "parking_goal",
+      "fault_seen": false
+    },
+    "arbiter": {
+      "state": "ACTIVE",
+      "reason": "command_allowed",
+      "armed": true,
+      "latched": false,
+      "cmd_vel_publisher_count": 1
+    },
+    "watchdog": {
+      "emergency_active": false,
+      "reason": "arbiter_heartbeat_fresh",
+      "publishing_cmd_vel": false
+    },
+    "safety": {
+      "valid": true,
+      "emergency_stop": false,
+      "fault_seen": false
+    },
+    "collision": {
+      "valid": true,
+      "all_sensors_fresh": true,
+      "event_seen": false
+    }
+  },
+  "metrics": {
+    "readiness_duration_s": 4.2,
+    "mission_duration_s": 84.3,
+    "post_complete_hold_s": 1.0,
+    "selected_y_m": -0.315,
+    "minimum_planned_clearance_m": 0.12,
+    "frame_alignment": {
+      "validated": true,
+      "odom_to_world_x_m": 0.0,
+      "odom_to_world_y_m": 0.0,
+      "odom_to_world_yaw_rad": 0.0,
+      "position_residual_m": 0.0,
+      "yaw_residual_rad": 0.0,
+      "sample_time_delta_s": 0.001
+    },
+    "final_odom": {
+      "x_m": 0.8015,
+      "y_m": 0.0,
+      "yaw_rad": 3.141592653589793,
+      "position_error_m": 0.0,
+      "yaw_error_rad": 0.0,
+      "margins_m": {
+        "front": 0.0435,
+        "rear": 0.0435,
+        "left": 0.016,
+        "right": 0.016,
+        "minimum": 0.016
+      }
+    },
+    "final_ground_truth": {
+      "x_m": 0.8015,
+      "y_m": 0.0,
+      "yaw_rad": 3.141592653589793,
+      "position_error_m": 0.0,
+      "yaw_error_rad": 0.0,
+      "margins_m": {
+        "front": 0.0435,
+        "rear": 0.0435,
+        "left": 0.016,
+        "right": 0.016,
+        "minimum": 0.016
+      }
+    },
+    "odom_ground_truth_position_delta_m": 0.0,
+    "odom_ground_truth_yaw_delta_rad": 0.0,
+    "cp2": {
+      "validated": true,
+      "crossing_time_s": 45.0,
+      "longitudinal_error_m": 0.002,
+      "cross_track_error_m": 0.003,
+      "heading_error_rad": 0.005,
+      "angular_speed_radps": 0.001
+    },
+    "stationary": {
+      "validated": true,
+      "maximum_linear_speed_mps": 0.0,
+      "maximum_angular_speed_radps": 0.0,
+      "maximum_desired_command": 0.0,
+      "maximum_output_command": 0.0,
+      "position_drift_m": 0.0,
+      "yaw_drift_rad": 0.0
+    },
+    "collision_count": 0
+  },
+  "evidence": {
+    "artifact_directory": "artifacts/EXAMPLE-NOT-A-REAL-RUN",
+    "bag_path": "artifacts/EXAMPLE-NOT-A-REAL-RUN/rosbag",
+    "bag_complete": true,
+    "required_topics": [
+      "/acceptance/collision_status",
+      "/clock",
+      "/cmd_vel",
+      "/gazebo/contacts/base",
+      "/gazebo/contacts/caster",
+      "/gazebo/contacts/lidar",
+      "/gazebo/contacts/wheel_left",
+      "/gazebo/contacts/wheel_right",
+      "/gazebo/model_states",
+      "/navigation/cmd_vel_watchdog_status",
+      "/navigation/control_status",
+      "/navigation/desired_cmd_vel",
+      "/navigation/plan",
+      "/navigation/safety_arbiter_status",
+      "/odom",
+      "/parking/candidates",
+      "/parking/selected_target",
+      "/safety/status",
+      "/scan",
+      "/tf",
+      "/tf_static"
+    ],
+    "topic_message_counts": {
+      "/acceptance/collision_status": 100,
+      "/clock": 100,
+      "/cmd_vel": 100,
+      "/gazebo/contacts/base": 100,
+      "/gazebo/contacts/caster": 100,
+      "/gazebo/contacts/lidar": 100,
+      "/gazebo/contacts/wheel_left": 100,
+      "/gazebo/contacts/wheel_right": 100,
+      "/gazebo/model_states": 100,
+      "/navigation/cmd_vel_watchdog_status": 100,
+      "/navigation/control_status": 100,
+      "/navigation/desired_cmd_vel": 100,
+      "/navigation/plan": 25,
+      "/navigation/safety_arbiter_status": 100,
+      "/odom": 100,
+      "/parking/candidates": 10,
+      "/parking/selected_target": 10,
+      "/safety/status": 25,
+      "/scan": 25,
+      "/tf": 100,
+      "/tf_static": 1
+    },
+    "missing_topics": [],
+    "events_path": "artifacts/EXAMPLE-NOT-A-REAL-RUN/events.jsonl",
+    "report_path": "artifacts/EXAMPLE-NOT-A-REAL-RUN/report.md",
+    "junit_path": "artifacts/EXAMPLE-NOT-A-REAL-RUN/junit.xml",
+    "logs_path": "artifacts/EXAMPLE-NOT-A-REAL-RUN/logs",
+    "video_path": null
+  },
+  "failures": []
+}

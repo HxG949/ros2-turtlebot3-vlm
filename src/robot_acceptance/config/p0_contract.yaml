@@ -1,0 +1,39 @@
+schema_version: 1.0.0
+contract_version: docs-p0-v1
+layout_seed: 42
+parking_space_id: space_2
+stop_at_cp1: false
+dry_run_evidence_duration_s: 2.0
+thresholds:
+  readiness_timeout_s: 30.0
+  motion_start_timeout_s: 10.0
+  mission_timeout_s: 120.0
+  monitor_grace_s: 5.0
+  post_complete_hold_s: 1.0
+  position_tolerance_m: 0.015
+  final_yaw_tolerance_rad: 0.05
+  stopped_linear_speed_mps: 0.005
+  stopped_angular_speed_radps: 0.02
+  command_zero_tolerance: 0.0001
+  post_complete_position_drift_m: 0.005
+  post_complete_yaw_drift_rad: 0.01
+  frame_alignment_position_tolerance_m: 0.01
+  frame_alignment_yaw_tolerance_rad: 0.02
+  frame_alignment_sync_tolerance_s: 0.1
+  cp2_position_tolerance_m: 0.015
+  cp2_cross_track_tolerance_m: 0.03
+  cp2_heading_tolerance_rad: 0.02
+  cp2_angular_speed_radps: 0.02
+  envelope_epsilon_m: 1.0e-9
+  robot_footprint_length_m: 0.21
+  robot_footprint_width_m: 0.178
+target:
+  frame_id: odom
+  parking_space_id: space_2
+  center_x_m: 0.8015
+  center_y_m: 0.0
+  entry_yaw_rad: 0.0
+  final_yaw_rad: 3.141592653589793
+  length_m: 0.297
+  width_m: 0.21
+  approach_distance_m: 0.4

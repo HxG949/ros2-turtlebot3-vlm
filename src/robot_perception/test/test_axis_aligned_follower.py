@@ -4,7 +4,11 @@ import pytest
 
 from robot_perception.axis_aligned_follower_node import calculate_linear_speed
 from robot_perception.axis_aligned_follower_node import calculate_turn_speed
+from robot_perception.axis_aligned_follower_node import arbiter_status_is_active
 from robot_perception.axis_aligned_follower_node import execution_plan_signature
+from robot_perception.axis_aligned_follower_node import (
+    evidence_subscribers_are_ready,
+)
 from robot_perception.axis_aligned_follower_node import heading_is_settled
 from robot_perception.axis_aligned_follower_node import plan_is_stable
 from robot_perception.axis_aligned_follower_node import pass_through_is_safe
@@ -121,6 +125,26 @@ def test_plan_must_remain_unchanged_for_stable_duration():
     assert plan_is_stable(10.59, 10.0, 0.6) is False
     assert plan_is_stable(10.60, 10.0, 0.6) is True
     assert plan_is_stable(10.60, None, 0.6) is False
+
+
+def test_arbiter_must_be_active_and_armed_before_follower_motion():
+    active = {
+        'enabled': True,
+        'armed': True,
+        'latched': False,
+        'state': 'ACTIVE',
+    }
+
+    assert arbiter_status_is_active(active)
+    assert not arbiter_status_is_active({**active, 'armed': False})
+    assert not arbiter_status_is_active({**active, 'latched': True})
+    assert not arbiter_status_is_active({**active, 'state': 'WAITING'})
+
+
+def test_acceptance_requires_all_evidence_subscribers_before_motion():
+    assert evidence_subscribers_are_ready(3, 2, 3, 2)
+    assert not evidence_subscribers_are_ready(2, 2, 3, 2)
+    assert not evidence_subscribers_are_ready(3, 1, 3, 2)
 
 
 def test_cp2_must_be_a_collinear_pass_through_waypoint():

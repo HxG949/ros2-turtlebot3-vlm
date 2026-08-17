@@ -6,3 +6,4 @@ cmd_vel_watchdog_node:
     check_rate_hz: 20.0
     heartbeat_timeout: 0.25
     startup_timeout: 2.0
+    startup_confirmation_duration: 0.5

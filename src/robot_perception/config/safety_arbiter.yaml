@@ -8,5 +8,6 @@ safety_arbiter_node:
     control_rate_hz: 20.0
     desired_timeout: 0.25
     safety_timeout: 0.6
+    startup_confirmation_duration: 0.5
     maximum_linear_speed: 0.06
     maximum_angular_speed: 0.30
